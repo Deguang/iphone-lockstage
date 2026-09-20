@@ -1,0 +1,420 @@
+<title>iPhone 壁纸预演台</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ink:#0B0D10; --panel:#14181D; --panel-2:#1A1F26; --line:#242B33;
+  --text:#C9D1D9; --muted:#7D8894; --accent:#4C8DFF;
+  --sans:'IBM Plex Sans',-apple-system,system-ui,'PingFang SC',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+:root[data-theme="light"]{
+  --ink:#EBEEF2; --panel:#FFF; --panel-2:#F5F7FA; --line:#D9E0E7;
+  --text:#18202A; --muted:#5A6672; --accent:#0B63D6;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);font-size:14px;
+  line-height:1.5;padding:0 16px;padding-block:20px 56px}
+header{max-width:1240px;margin:0 auto 20px;display:flex;flex-wrap:wrap;gap:12px;
+  align-items:baseline;justify-content:space-between}
+h1{font-size:19px;font-weight:600;margin:0}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+.sub a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(280px,380px) 1fr;
+  gap:26px;align-items:start}
+@media (max-width:840px){.wrap{grid-template-columns:1fr}}
+.stage{position:sticky;top:20px;display:flex;flex-direction:column;gap:11px}
+.tabs{display:flex;gap:6px}
+.tab{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;
+  padding:8px;font-family:var(--sans);font-size:13px;cursor:pointer}
+.tab[aria-selected=true]{border-color:var(--accent);color:var(--accent)}
+
+/* 手机：整块就是一个 SVG，viewBox 是真机像素。
+   所有图层共用这一套坐标，不再有「遮罩一套、滤镜另一套」的对不上问题。 */
+.phone{width:100%;aspect-ratio:1290/2796;border-radius:11%/5%;overflow:hidden;background:#000;
+  box-shadow:0 20px 64px rgba(0,0,0,.5),0 0 0 1px var(--line);display:block}
+.phone svg{display:block;width:100%;height:100%}
+
+.drop{border:1px dashed var(--line);border-radius:9px;padding:11px;text-align:center;
+  color:var(--muted);font-size:12.5px;cursor:pointer;background:var(--panel)}
+.drop:hover,.drop.over{border-color:var(--accent);color:var(--text)}
+.drop input{display:none}
+.hint{color:var(--muted);font-size:12px;text-align:center;line-height:1.6;margin:0}
+kbd{font-family:var(--mono);background:var(--panel-2);border:1px solid var(--line);border-radius:4px;
+  padding:1px 5px;font-size:11px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.panel+.panel{margin-top:13px}
+.phead{padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel-2);
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.phead h2{margin:0;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+.phead em{font-style:normal;color:var(--muted);font-size:11.5px;font-family:var(--mono)}
+.rows{padding:5px 14px 11px}
+.row{display:grid;grid-template-columns:96px 1fr 56px;gap:10px;align-items:center;padding:5px 0}
+.row label{font-size:12.5px;color:var(--muted)}
+.row label b{color:var(--text);font-weight:500;font-family:var(--mono);font-size:11.5px}
+.row output{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent);background:transparent}
+input[type=text]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+  border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;padding:10px 14px 13px}
+.chip{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:999px;
+  padding:5px 11px;font-size:12px;cursor:pointer;font-family:var(--mono)}
+.chip[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+:is(.chip,.tab,.drop,button):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.out{padding:12px 14px}
+pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:11px;
+  font-family:var(--mono);font-size:11.5px;line-height:1.6;overflow-x:auto}
+.copy{margin-top:9px;width:100%;background:var(--accent);color:#fff;border:0;border-radius:8px;
+  padding:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans)}
+.note{color:var(--muted);font-size:12px;margin:9px 14px 12px;line-height:1.65}
+.note b{color:var(--text);font-weight:500}
+.theme-btn{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:7px;
+  padding:6px 11px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+</style>
+
+<header>
+  <div>
+    <h1>iPhone 壁纸预演台</h1>
+    <p class="sub">玻璃时钟走字形 SDF 位移折射，技法改编自
+      <a href="https://github.com/shuding/liquid-glass">shuding/liquid-glass</a>（MIT）</p>
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button">切换主题</button>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tabLock" role="tab" aria-selected="true" type="button">锁屏</button>
+      <button class="tab" id="tabHome" role="tab" aria-selected="false" type="button">主屏</button>
+    </div>
+
+    <div class="phone">
+      <svg id="scr" viewBox="0 0 1290 2796" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <clipPath id="clipTxt"><text id="clipText" x="645" text-anchor="middle"
+            dominant-baseline="central">11:49</text></clipPath>
+          <filter id="refract" x="-10%" y="-10%" width="120%" height="120%">
+            <feImage id="dispImg" result="map" preserveAspectRatio="none"
+                     x="0" y="0" width="1290" height="2796"/>
+            <feDisplacementMap id="dispMap" in="SourceGraphic" in2="map" scale="70"
+                               xChannelSelector="R" yChannelSelector="G"/>
+            <feGaussianBlur id="fFrost" stdDeviation="3"/>
+            <feComponentTransfer id="fLift">
+              <feFuncR type="linear" slope="1.12"/><feFuncG type="linear" slope="1.12"/>
+              <feFuncB type="linear" slope="1.12"/>
+            </feComponentTransfer>
+          </filter>
+          <filter id="bev" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="b" id="fBlur"/>
+            <feSpecularLighting in="b" surfaceScale="7" specularConstant="1" specularExponent="18"
+                                lighting-color="#fff" result="sp" id="fSpec">
+              <feDistantLight azimuth="235" elevation="52" id="fLight"/>
+            </feSpecularLighting>
+            <feComposite in="sp" in2="SourceAlpha" operator="in"/>
+          </filter>
+        </defs>
+
+        <!-- 壁纸 -->
+        <image id="wpImg" x="0" y="0" width="1290" height="2796" preserveAspectRatio="xMidYMid slice"/>
+
+        <!-- 锁屏 -->
+        <g id="lockLayer">
+          <!-- 玻璃体：同一张壁纸，被字形裁出来 + 位移折射 -->
+          <g clip-path="url(#clipTxt)">
+            <image id="wpGlass" x="0" y="0" width="1290" height="2796"
+                   preserveAspectRatio="xMidYMid slice" filter="url(#refract)"/>
+            <rect id="tintRect" x="0" y="0" width="1290" height="2796" fill="#fff" opacity=".14"/>
+          </g>
+          <!-- 斜面高光 -->
+          <text id="bevText" x="645" text-anchor="middle" dominant-baseline="central"
+                fill="#000" filter="url(#bev)">11:49</text>
+
+          <!-- 原生件。数值＝屏宽千分比 × 1.29，与 assets/library/lockscreen.json 同源 -->
+          <rect id="island" x="485" y="15" width="320" height="82" rx="41" fill="#000"/>
+          <text id="carrier" x="85" y="95" font-size="41" font-weight="600">中国联通</text>
+          <text id="sigR" x="1205" y="95" font-size="41" font-weight="600" text-anchor="end">5G ▮</text>
+          <text id="dateL" x="645" y="307" font-size="43" font-weight="600" text-anchor="middle"
+                opacity=".95">9月20日 周日 · 丙午年八月初十</text>
+          <g id="rbtns">
+            <circle cx="178" cy="2434" r="68" fill="#EBEBF0" fill-opacity=".26"/>
+            <circle cx="1112" cy="2434" r="68" fill="#EBEBF0" fill-opacity=".26"/>
+            <text x="178" y="2452" font-size="58" text-anchor="middle" fill="#fff">⌁</text>
+            <text x="1112" y="2452" font-size="58" text-anchor="middle" fill="#fff">◉</text>
+          </g>
+          <rect id="homeBar" x="413" y="2712" width="464" height="15" rx="8" opacity=".9"/>
+        </g>
+
+        <!-- 主屏 -->
+        <g id="homeLayer" style="display:none">
+          <rect x="485" y="15" width="320" height="82" rx="41" fill="#000"/>
+          <text x="85" y="95" font-size="41" font-weight="600" fill="#fff">中国联通</text>
+          <text x="1205" y="95" font-size="41" font-weight="600" text-anchor="end" fill="#fff">5G ▮</text>
+          <text id="miniClock" x="645" y="250" font-size="52" font-weight="600" text-anchor="middle"
+                fill="#fff">11:49</text>
+          <g id="appGrid"></g>
+          <rect x="70" y="2380" width="1150" height="300" rx="150" fill="#fff" fill-opacity=".18"/>
+          <g id="dockRow"></g>
+          <rect x="413" y="2712" width="464" height="15" rx="8" fill="#fff" opacity=".9"/>
+        </g>
+      </svg>
+    </div>
+
+    <label class="drop" id="drop" tabindex="0">拖一张壁纸进来，或点击选择
+      <input type="file" id="file" accept="image/*"></label>
+    <p class="hint">调好用 <kbd>⌘⇧4</kbd> 框选手机截图 —— 沙箱禁下载</p>
+  </div>
+
+  <div>
+    <section class="panel">
+      <div class="phead"><h2>时钟字形</h2><em>SFNS.ttf 可变轴</em></div>
+      <div class="rows">
+        <div class="row"><label for="cTime">时间</label><input type="text" id="cTime" value="11:49"><output></output></div>
+        <div class="row"><label for="wdth">宽度 <b>wdth</b></label>
+          <input type="range" id="wdth" min="30" max="150" step="1" value="45"><output id="oWdth">45</output></div>
+        <div class="row"><label for="wght">字重 <b>wght</b></label>
+          <input type="range" id="wght" min="1" max="1000" step="10" value="280"><output id="oWght">280</output></div>
+        <div class="row"><label for="fsize">宽度 <b>占屏%</b></label>
+          <input type="range" id="fsize" min="30" max="98" step="1" value="88"><output id="oFsize">88</output></div>
+        <div class="row"><label for="ypos">中线 <b>屏高%</b></label>
+          <input type="range" id="ypos" min="12" max="70" step="0.5" value="24"><output id="oYpos">24</output></div>
+      </div>
+      <p class="note">轴范围取自本机 SFNS.ttf：wdth 30–150、wght 1–1000。
+        这条轴<b>只有 Safari 和 macOS 上的 Chrome</b> 能驱动，别处静默回退成常规宽度。</p>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>玻璃</h2><em>字形 SDF → feDisplacementMap</em></div>
+      <div class="rows">
+        <div class="row"><label for="disp">折射 <b>scale</b></label>
+          <input type="range" id="disp" min="0" max="200" step="2" value="70"><output id="oDisp">70</output></div>
+        <div class="row"><label for="edge">边缘集中</label>
+          <input type="range" id="edge" min="0.05" max="1" step="0.01" value="0.34"><output id="oEdge">0.34</output></div>
+        <div class="row"><label for="frost">磨砂 <b>blur</b></label>
+          <input type="range" id="frost" min="0" max="20" step="0.5" value="3"><output id="oFrost">3</output></div>
+        <div class="row"><label for="lift">提亮</label>
+          <input type="range" id="lift" min="0.6" max="1.8" step="0.01" value="1.12"><output id="oLift">1.12</output></div>
+        <div class="row"><label for="tint">染色</label>
+          <input type="range" id="tint" min="0" max="0.6" step="0.01" value="0.14"><output id="oTint">0.14</output></div>
+      </div>
+      <div class="phead" style="border-top:1px solid var(--line)"><h2>斜面高光</h2><em>feSpecularLighting</em></div>
+      <div class="rows">
+        <div class="row"><label for="bevw">斜面宽</label>
+          <input type="range" id="bevw" min="1" max="40" step="0.5" value="9"><output id="oBevw">9</output></div>
+        <div class="row"><label for="surf">起伏</label>
+          <input type="range" id="surf" min="0" max="20" step="0.5" value="7"><output id="oSurf">7</output></div>
+        <div class="row"><label for="sexp">聚光</label>
+          <input type="range" id="sexp" min="1" max="60" step="1" value="18"><output id="oSexp">18</output></div>
+        <div class="row"><label for="azi">光向</label>
+          <input type="range" id="azi" min="0" max="360" step="5" value="235"><output id="oAzi">235</output></div>
+        <div class="row"><label for="elev">仰角</label>
+          <input type="range" id="elev" min="5" max="85" step="1" value="52"><output id="oElev">52</output></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>开关</h2><em>lockscreen.json</em></div>
+      <div class="chips">
+        <button class="chip" id="tIsland" aria-pressed="true" type="button">灵动岛</button>
+        <button class="chip" id="tLunar" aria-pressed="true" type="button">农历</button>
+        <button class="chip" id="tBtns" aria-pressed="true" type="button">手电筒/相机</button>
+        <button class="chip" id="tInk" aria-pressed="false" type="button">深色文字</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>参数</h2><em>粘进 coverGen</em></div>
+      <div class="out"><pre id="json">…</pre>
+        <button class="copy" id="copyBtn" type="button">复制 JSON</button></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var SW=1290, SH=2796, FONT='-apple-system, system-ui, sans-serif';
+
+function seed(){
+  var c=document.createElement('canvas');c.width=645;c.height=1398;var x=c.getContext('2d');
+  var g=x.createLinearGradient(0,0,0,c.height*0.55);
+  g.addColorStop(0,'#2B5B7C');g.addColorStop(.5,'#7EA5B7');g.addColorStop(.86,'#E8BC82');g.addColorStop(1,'#F1D0A2');
+  x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
+  [[0.63,'#90A7B5'],[0.71,'#6B8396'],[0.80,'#4B6177'],[0.90,'#2F4053'],[1.0,'#1C2837']].forEach(function(b,i){
+    var y=c.height*b[0];x.fillStyle=b[1];x.beginPath();x.moveTo(0,y);
+    for(var p=0;p<=c.width;p+=10)x.lineTo(p,y+Math.sin(p/88+i*1.7)*26+Math.sin(p/35+i)*9);
+    x.lineTo(c.width,c.height);x.lineTo(0,c.height);x.closePath();x.fill();});
+  return c.toDataURL('image/jpeg',.9);
+}
+var wpURL=seed();
+
+var lastFontSize=600;
+var S={wdth:45,wght:280,fsize:88,ypos:24,disp:70,edge:.34,frost:3,lift:1.12,tint:.14,
+       bevw:9,surf:7,sexp:18,azi:235,elev:52,island:true,lunar:true,btns:true,dark:false,time:'11:49'};
+
+/* 位移图：改编自 shuding/liquid-glass（MIT）。
+   原作对圆角矩形求 SDF；这里换成**字形**的 SDF —— canvas 画字取 alpha，
+   两趟倒角距离变换得到「离边缘多远」，再把梯度编码进 R/G。
+   玻璃的折射就是这么来的：靠边缘位移大，中间几乎不动。 */
+function displacementMap(){
+  var W=220,H=Math.round(W*SH/SW);
+  var c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
+  // 字号跟 fitText 量出来的走，换算到这张小图上
+  var px=lastFontSize*(H/SH);
+  x.font=px+'px '+FONT;
+  x.fillText(S.time,W/2,S.ypos/100*H);
+  var a=x.getImageData(0,0,W,H).data;
+
+  var INF=1e6,d=new Float32Array(W*H),k;
+  for(var i=0;i<W*H;i++)d[i]=a[i*4]>127?INF:0;
+  for(var y=0;y<H;y++)for(var xx=0;xx<W;xx++){k=y*W+xx;if(!d[k])continue;var m=d[k];
+    if(xx>0)m=Math.min(m,d[k-1]+1); if(y>0)m=Math.min(m,d[k-W]+1);
+    if(xx>0&&y>0)m=Math.min(m,d[k-W-1]+1.4142);
+    if(xx<W-1&&y>0)m=Math.min(m,d[k-W+1]+1.4142); d[k]=m;}
+  for(var y2=H-1;y2>=0;y2--)for(var x2=W-1;x2>=0;x2--){k=y2*W+x2;if(!d[k])continue;var m2=d[k];
+    if(x2<W-1)m2=Math.min(m2,d[k+1]+1); if(y2<H-1)m2=Math.min(m2,d[k+W]+1);
+    if(x2<W-1&&y2<H-1)m2=Math.min(m2,d[k+W+1]+1.4142);
+    if(x2>0&&y2<H-1)m2=Math.min(m2,d[k+W-1]+1.4142); d[k]=m2;}
+
+  var R=Math.max(2,S.edge*px*0.5), h=new Float32Array(W*H);
+  for(var j=0;j<W*H;j++){var t=Math.min(1,d[j]/R);h[j]=t*t*(3-2*t);}
+
+  var img=x.createImageData(W,H),o=img.data;
+  var at=function(X,Y){return h[Math.max(0,Math.min(H-1,Y))*W+Math.max(0,Math.min(W-1,X))]};
+  for(var y3=0;y3<H;y3++)for(var x3=0;x3<W;x3++){var q=y3*W+x3;
+    o[q*4]=Math.max(0,Math.min(255,128+(at(x3+1,y3)-at(x3-1,y3))*127*5));
+    o[q*4+1]=Math.max(0,Math.min(255,128+(at(x3,y3+1)-at(x3,y3-1))*127*5));
+    o[q*4+2]=128;o[q*4+3]=255;}
+  x.putImageData(img,0,0);
+  return c.toDataURL();
+}
+
+/**
+ * 按**目标宽度**定字号，不按字高。
+ *
+ * 原来用「字高% → 字号」推，结果 11:49 横向溢出屏幕两边被切掉 ——
+ * 因为 font-variation-settings 的 wdth 轴**不保证生效**（只有 Safari 和
+ * macOS 上的 Chrome 能驱动系统字体这条轴），轴没生效字就变宽。
+ * 量出来再缩放，轴生效与否都不会溢出。
+ */
+function fitText(el){
+  el.setAttribute('font-family',FONT);
+  el.setAttribute('font-variation-settings',"'wdth' "+S.wdth+", 'wght' "+S.wght+", 'opsz' 96");
+  el.setAttribute('y',(S.ypos/100*SH).toFixed(1));
+  el.textContent=S.time;
+  var probe=1000;
+  el.setAttribute('font-size',probe);
+  var w=0;
+  try{ w=el.getComputedTextLength(); }catch(e){}
+  if(!w) return probe*0.5;
+  var size=probe*(S.fsize/100*SW)/w;
+  el.setAttribute('font-size',size.toFixed(1));
+  return size;
+}
+
+function apply(){
+  var ink=S.dark?'#3a3a3c':'#ffffff';
+  $('wpImg').setAttribute('href',wpURL);
+  $('wpGlass').setAttribute('href',wpURL);
+  var fs=fitText($('clipText')); fitText($('bevText'));
+  lastFontSize=fs;
+
+  $('dispImg').setAttribute('href',displacementMap());
+  $('dispMap').setAttribute('scale',S.disp);
+  $('fFrost').setAttribute('stdDeviation',S.frost);
+  var ft=$('fLift').children;
+  for(var i=0;i<ft.length;i++)ft[i].setAttribute('slope',S.lift);
+  $('tintRect').setAttribute('fill',S.dark?'#000':'#fff');
+  $('tintRect').setAttribute('opacity',S.tint);
+
+  $('fBlur').setAttribute('stdDeviation',S.bevw);
+  $('fSpec').setAttribute('surfaceScale',S.surf);
+  $('fSpec').setAttribute('specularExponent',S.sexp);
+  $('fLight').setAttribute('azimuth',S.azi);
+  $('fLight').setAttribute('elevation',S.elev);
+
+  ['carrier','sigR','dateL'].forEach(function(id){$(id).setAttribute('fill',ink)});
+  $('homeBar').setAttribute('fill',ink);
+  $('island').style.display=S.island?'':'none';
+  $('rbtns').style.display=S.btns?'':'none';
+  $('dateL').textContent=S.lunar?'9月20日 周日 · 丙午年八月初十':'9月20日 周日';
+  $('dateL').setAttribute('font-family',"'PingFang SC',"+FONT);
+  $('carrier').setAttribute('font-family',"'PingFang SC',"+FONT);
+  $('miniClock').textContent=S.time;
+
+  $('json').textContent=JSON.stringify({
+    clock:{wdth:S.wdth,wght:S.wght,heightPctOfScreen:S.fsize,centerYPctOfScreen:S.ypos},
+    glass:{displaceScale:S.disp,edgeConcentration:S.edge,frostPx:S.frost,lift:S.lift,tint:S.tint},
+    bevel:{blur:S.bevw,surfaceScale:S.surf,specularExponent:S.sexp,azimuth:S.azi,elevation:S.elev},
+    lockscreen:{island:S.island,lunar:S.lunar,buttons:S.btns,darkInk:S.dark}
+  },null,2);
+}
+
+/* 主屏图标：抽象色块，不仿任何真实 App */
+(function(){
+  var hues=[14,32,48,96,150,190,210,232,262,292,320,350];
+  var g=$('appGrid'), x0=105, y0=380, cell=245, gap=75, S0=245;
+  for(var i=0;i<12;i++){
+    var r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x0+(i%4)*(S0+gap)); r.setAttribute('y',y0+Math.floor(i/4)*(S0+gap+58));
+    r.setAttribute('width',S0); r.setAttribute('height',S0); r.setAttribute('rx',56);
+    r.setAttribute('fill','hsl('+hues[i]+' 78% 58%)');
+    g.appendChild(r);
+  }
+  var dk=$('dockRow');
+  for(var j=0;j<4;j++){
+    var e=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    e.setAttribute('x',150+j*(S0+65)); e.setAttribute('y',2408);
+    e.setAttribute('width',S0); e.setAttribute('height',S0); e.setAttribute('rx',56);
+    e.setAttribute('fill','hsl('+hues[j*3]+' 74% 56%)');
+    dk.appendChild(e);
+  }
+})();
+
+[['wdth','oWdth',0],['wght','oWght',0],['fsize','oFsize',1],['ypos','oYpos',1],
+ ['disp','oDisp',0],['edge','oEdge',2],['frost','oFrost',1],['lift','oLift',2],['tint','oTint',2],
+ ['bevw','oBevw',1],['surf','oSurf',1],['sexp','oSexp',0],['azi','oAzi',0],['elev','oElev',0]
+].forEach(function(s){
+  var inp=$(s[0]),out=$(s[1]);
+  inp.addEventListener('input',function(){S[s[0]]=parseFloat(inp.value);out.textContent=S[s[0]].toFixed(s[2]);apply()});
+});
+$('cTime').addEventListener('input',function(){S.time=this.value||'11:49';apply()});
+
+[['tIsland','island'],['tLunar','lunar'],['tBtns','btns'],['tInk','dark']].forEach(function(t){
+  var b=$(t[0]);
+  b.addEventListener('click',function(){S[t[1]]=!S[t[1]];b.setAttribute('aria-pressed',String(S[t[1]]));apply()});
+});
+
+function showTab(lock){
+  $('tabLock').setAttribute('aria-selected',String(lock));
+  $('tabHome').setAttribute('aria-selected',String(!lock));
+  $('lockLayer').style.display=lock?'':'none';
+  $('homeLayer').style.display=lock?'none':'';
+}
+$('tabLock').addEventListener('click',function(){showTab(true)});
+$('tabHome').addEventListener('click',function(){showTab(false)});
+
+function readFile(f){
+  if(!f||!/^image\//.test(f.type))return;
+  var r=new FileReader();r.onload=function(){wpURL=r.result;apply()};r.readAsDataURL(f);
+}
+$('file').addEventListener('change',function(){readFile(this.files[0])});
+var dz=$('drop');
+['dragenter','dragover'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault();dz.classList.add('over')})});
+['dragleave','drop'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault();dz.classList.remove('over')})});
+dz.addEventListener('drop',function(ev){readFile(ev.dataTransfer.files[0])});
+dz.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();$('file').click()}});
+
+$('copyBtn').addEventListener('click',function(){
+  if(navigator.clipboard)navigator.clipboard.writeText($('json').textContent);
+  var self=this;self.textContent='已复制';setTimeout(function(){self.textContent='复制 JSON'},1400);
+});
+$('themeBtn').addEventListener('click',function(){
+  var r=document.documentElement;
+  r.setAttribute('data-theme',r.getAttribute('data-theme')==='light'?'dark':'light');
+});
+
+apply();
+})();
+</script>

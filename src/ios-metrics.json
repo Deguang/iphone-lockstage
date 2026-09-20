@@ -1,0 +1,96 @@
+{
+  "_source": "全部来自 iOS 模拟器真机截图实测，不是查来的、更不是目测的。重跑 `node tools/measure-ios.mjs reference/home.png` 可复现每一个数字。",
+  "_why": "这个项目唯一能赢闭源工具的地方就是准。而「准」不能靠查设计博客或对着截图估 —— 两者都试过都错：状态栏左边距按感觉写 28pt，实测 61pt，差一倍多。",
+  "_unit": "除非注明，单位都是 pt（逻辑点）。@3x 设备乘 3 得像素。",
+  "_captured": {
+    "date": "2026-09-20",
+    "runtime": "iOS 26.2 (23C54)",
+    "device": "iPhone 17 Pro Max",
+    "screenshot": "reference/home.png",
+    "note": "模拟器默认壁纸是纯黑，测量脚本靠「非黑即内容」切分。换壁纸后该脚本不成立。"
+  },
+
+  "screen": {
+    "pt": { "w": 440, "h": 956 },
+    "px": { "w": 1320, "h": 2868 },
+    "scale": 3
+  },
+
+  "statusBar": {
+    "_measured": "墨迹条带 y 75–117px",
+    "inkTop": 25,
+    "inkHeight": 14.3,
+    "timeLeft": 60.7,
+    "batteryRight": 396.3,
+    "_glyphs": "时间 60.7–106.3 · 信号四格 312.3–333.7 · Wi-Fi 341.7–360.3 · 电池 368.3–396.3",
+    "signalDots": { "x0": 312.3, "x1": 333.7, "count": 4, "pitch": 6 },
+    "wifi": { "x0": 341.7, "x1": 360.3 },
+    "battery": { "x0": 368.3, "x1": 396.3 }
+  },
+
+  "dynamicIsland": {
+    "_caveat": "**这组数字没有实测**。灵动岛在截图里是纯黑，和黑壁纸无法区分，测量脚本切不出来。下面是 Apple 公开的规格，标出来是为了别把它和实测值混为一谈。",
+    "w": 125,
+    "h": 36.67,
+    "top": 11,
+    "centered": true
+  },
+
+  "homeScreen": {
+    "icon": {
+      "_measured": "图标行 y 934–1137px，四列连通域",
+      "size": 68,
+      "cornerRadiusRatio": 0.2237,
+      "_radiusNote": "22.37% 是 Apple squircle 的公开比例，**未实测**（圆角在黑底上量不准）"
+    },
+    "grid": {
+      "columns": 4,
+      "columnPitch": 100.7,
+      "rowPitch": 108.7,
+      "marginLeft": 35,
+      "marginRight": 35,
+      "firstIconRowTop": 311.3
+    },
+    "label": {
+      "_measured": "标签条带 y 1158–1190px",
+      "inkHeight": 11,
+      "gapBelowIcon": 6.7
+    },
+    "widget2x2": {
+      "_measured": "组件条带 y 282–811px",
+      "top": 94,
+      "height": 176.7,
+      "left": 31,
+      "right": 408.7,
+      "labelTop": 277.3,
+      "labelHeight": 11
+    },
+    "searchPill": {
+      "_measured": "胶囊条带 y 2291–2380px",
+      "top": 763.7,
+      "height": 30,
+      "left": 189.3,
+      "width": 61
+    },
+    "dock": {
+      "_measured": "Dock 条带 y 2465–2816px",
+      "top": 821.7,
+      "height": 117.3,
+      "left": 17,
+      "width": 406
+    }
+  },
+
+  "lockScreen": {
+    "_todo": "锁屏还没实测 —— 模拟器锁屏要按 ⌘L，而 osascript 发按键被系统拦了（缺辅助功能权限）。下面的值沿用 redbook-op 的 assets/library/lockscreen.json，**属于待验证**，拿到锁屏截图后必须重量一遍。",
+    "_status": "unverified",
+    "dateTop": 238,
+    "clockCenterY": 372,
+    "clockFontSize": 228,
+    "buttonBottom": 126,
+    "buttonDiameter": 106,
+    "buttonMargin": 85,
+    "homeIndicator": { "bottom": 30, "w": 360, "h": 12 },
+    "_unitNote": "这一组沿用旧文件的「屏宽千分比」单位，和上面的 pt 不同，实测后要统一。"
+  }
+}

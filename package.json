@@ -1,0 +1,13 @@
+{
+  "name": "lockstage",
+  "version": "0.1.0",
+  "description": "Pixel-accurate iOS lock & home screen preview for wallpapers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module"
+}
