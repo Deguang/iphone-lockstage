@@ -156,6 +156,10 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
                我原先写的 160pt 宽偏了。锁屏上没有这条，只有主屏有。 -->
           <rect x="454" y="2793" width="411" height="15" rx="8" fill="#fff" opacity=".9"/>
         </g>
+        <!-- 署名：机模存在的意义之一就是防盗，所以每张都带。
+             白字 + 投影，和图标标签同一套处理 —— 深浅壁纸通吃。 -->
+        <text id="brandMark" x="660" y="2690" font-size="40" font-weight="500"
+              text-anchor="middle" fill="#fff" fill-opacity=".72" filter="url(#labSh)"></text>
       </svg>
     </div>
 
@@ -175,6 +179,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
       <div class="phead"><h2>时钟字形</h2><em>SFNS.ttf 可变轴</em></div>
       <div class="rows">
         <div class="row"><label for="cTime">时间</label><input type="text" id="cTime"><output></output></div>
+        <div class="row"><label for="cBrand">署名</label><input type="text" id="cBrand" value="@萌物壁纸"><output></output></div>
         <div class="row"><label for="wdth">宽度 <b>wdth</b></label>
           <input type="range" id="wdth" min="30" max="150" step="1" value="45"><output id="oWdth">45</output></div>
         <div class="row"><label for="wght">字重 <b>wght</b></label>
@@ -252,7 +257,7 @@ var wpURL=seed();
 var lastLayout=null;
 /* 默认值＝**拉伸态实测**：宽 76.1% 屏宽、中线 25.0% 屏高（src/ios-metrics.json）。
    wdth 40 对应实测单字宽高比 0.26 ≈ SF 常规 0.76 的三分之一。 */
-var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,inkMode:'auto',time:nowHHMM()};
+var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,inkMode:'auto',brand:'@萌物壁纸',time:nowHHMM()};
 
 /**
  * 用**字形路径**排时钟，不用 <text>。
@@ -365,6 +370,8 @@ function apply(){
 
   $('statusBar').setAttribute('color',ink);      // 图元用 currentColor
   $('carrier').setAttribute('fill',ink);
+  $('brandMark').textContent=S.brand||'';
+  $('brandMark').setAttribute('font-family',"'PingFang SC',"+FONT);
   $('carrier').textContent=S.time;               // 真机主屏左上角是时间，不是运营商
   $('dateL').setAttribute('fill',ink);
   $('island').style.display=S.island?'':'none';
@@ -479,6 +486,8 @@ function apply(){
   var inp=$(s[0]),out=$(s[1]);
   inp.addEventListener('input',function(){S[s[0]]=parseFloat(inp.value);out.textContent=S[s[0]].toFixed(s[2]);apply()});
 });
+$('cBrand').value=S.brand;
+$('cBrand').addEventListener('input',function(){S.brand=this.value;apply()});
 $('cTime').value=S.time;
 $('cTime').addEventListener('input',function(){S.time=this.value||nowHHMM();apply()});
 
@@ -620,6 +629,15 @@ async function renderPair(){
     x.drawImage(p[0],p[1],y0,pw,ph);
     x.restore();
   });
+  // 署名画在底部背景区 —— 手机是居中的，下方本来就有留白
+  if(S.brand){
+    x.font='500 '+Math.round(W*0.027)+'px "PingFang SC",-apple-system,sans-serif';
+    x.textAlign='center'; x.textBaseline='alphabetic';
+    x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=Math.round(W*0.008); x.shadowOffsetY=2;
+    x.fillStyle='rgba(255,255,255,.78)';
+    x.fillText(S.brand, W/2, y0+ph+Math.round((H-y0-ph)/2)+Math.round(W*0.01));
+    x.shadowColor='transparent';
+  }
   return await new Promise(function(res){c.toBlob(function(b2){res(b2)},'image/png')});
 }
 
