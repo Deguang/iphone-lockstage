@@ -117,6 +117,20 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
         <!-- 壁纸 -->
         <image id="wpImg" x="0" y="0" width="1320" height="2868" preserveAspectRatio="xMidYMid slice"/>
 
+
+        <!-- 状态栏：**锁屏主屏共用一套**。原先两层各写了一份，改了锁屏那份
+             主屏还是旧的文字版 —— 同一视觉写两遍必然漂移。 -->
+        <g id="statusBar" fill="currentColor">
+          <rect id="island" x="472" y="33" width="375" height="110" rx="55" fill="#000"/>
+          <text id="carrier" x="182" y="117" font-size="55.5" font-weight="600">9:41</text>
+          <!-- 状态栏右侧：信号四格 / Wi-Fi / 电池。x 全部来自实测
+               （信号 312.3–333.7pt · Wi-Fi 341.7–360.3 · 电池 368.3–396.3，×3 得 px） -->
+          <g id="sigR" fill="currentColor">
+            <g id="bars"></g>
+            <path id="wifi" d="" fill="none" stroke-width="7" stroke-linecap="round"/>
+            <g id="batt"></g>
+          </g>
+        </g>
         <!-- 锁屏 -->
         <g id="lockLayer">
           <!-- 玻璃体：同一张壁纸，被字形裁出来 + 位移折射 -->
@@ -131,14 +145,6 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 
           <!-- 原生件。**全部来自 reference/*.png 实测**，单位 pt×3=px，见 src/ios-metrics.json -->
           <rect id="island" x="472" y="33" width="375" height="110" rx="55" fill="#000"/>
-          <text id="carrier" x="182" y="117" font-size="43" font-weight="600">9:41</text>
-          <!-- 状态栏右侧：信号四格 / Wi-Fi / 电池。x 全部来自实测
-               （信号 312.3–333.7pt · Wi-Fi 341.7–360.3 · 电池 368.3–396.3，×3 得 px） -->
-          <g id="sigR" fill="currentColor">
-            <g id="bars"></g>
-            <path id="wifi" d="" fill="none" stroke-width="7" stroke-linecap="round"/>
-            <g id="batt"></g>
-          </g>
           <text id="dateL" x="660" y="330" font-size="42" font-weight="600" text-anchor="middle"
                 opacity=".95">9月20日周日 · 丙午年八月初十</text>
           <g id="rbtns">
@@ -152,15 +158,13 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 
         <!-- 主屏 -->
         <g id="homeLayer" style="display:none">
-          <rect x="485" y="15" width="320" height="82" rx="41" fill="#000"/>
-          <text x="85" y="95" font-size="41" font-weight="600" fill="#fff">中国联通</text>
-          <text x="1205" y="95" font-size="41" font-weight="600" text-anchor="end" fill="#fff">5G ▮</text>
-          <text id="miniClock" x="645" y="250" font-size="52" font-weight="600" text-anchor="middle"
-                fill="#fff">11:49</text>
+          <!-- 真机主屏上方**只有状态栏那一处时间**，没有第二个钟。
+               这里原本多画了一个 miniClock，删掉。 -->
+          <!-- Dock 底框和 home 条都由构建器按实测画（见下方 JS）。
+               这里曾经另写了一份写死的，结果两份叠在一起 → Dock 重影。 -->
           <g id="appGrid"></g>
-          <rect x="70" y="2380" width="1150" height="300" rx="150" fill="#fff" fill-opacity=".18"/>
           <g id="dockRow"></g>
-          <rect x="413" y="2712" width="464" height="15" rx="8" fill="#fff" opacity=".9"/>
+          <rect x="420" y="2784" width="480" height="15" rx="8" fill="#fff" opacity=".9"/>
         </g>
       </svg>
     </div>
@@ -236,12 +240,15 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
   </div>
 </div>
 
+<!-- 真实图标：src/icons.js 由 tools/extract-icons.mjs 从模拟器截图抠出。
+     **是 Apple 的素材，gitignore 了，不随仓库分发。** 文件不存在就退回色块。 -->
+<script src="src/icons.js" onerror="void 0"></script>
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
 /* 实测常量。来源 src/ios-metrics.json —— 全部由 tools/measure-ios.mjs
    从 iOS 26.2 模拟器截图量出，可复现。别在这里手改数字。 */
-var M={"statusBar":{"_measured": "墨迹条带 y 75–117px", "inkTop": 25, "inkHeight": 14.3, "timeLeft": 60.7, "batteryRight": 396.3, "_glyphs": "时间 60.7–106.3 · 信号四格 312.3–333.7 · Wi-Fi 341.7–360.3 · 电池 368.3–396.3", "signalDots": {"x0": 312.3, "x1": 333.7, "count": 4, "pitch": 6}, "wifi": {"x0": 341.7, "x1": 360.3}, "battery": {"x0": 368.3, "x1": 396.3}},"homeScreen": {"icon": {"_measured": "图标行 y 934–1137px，四列连通域", "size": 68, "cornerRadiusRatio": 0.2237, "_radiusNote": "22.37% 是 Apple squircle 的公开比例，**未实测**（圆角在黑底上量不准）"}, "grid": {"columns": 4, "columnPitch": 100.7, "rowPitch": 108.7, "marginLeft": 35, "marginRight": 35, "firstIconRowTop": 311.3}, "label": {"_measured": "标签条带 y 1158–1190px", "inkHeight": 11, "gapBelowIcon": 6.7}, "widget2x2": {"_measured": "组件条带 y 282–811px", "top": 94, "height": 176.7, "left": 31, "right": 408.7, "labelTop": 277.3, "labelHeight": 11}, "searchPill": {"_measured": "胶囊条带 y 2291–2380px", "top": 763.7, "height": 30, "left": 189.3, "width": 61}, "dock": {"_measured": "Dock 条带 y 2465–2816px", "top": 821.7, "height": 117.3, "left": 17, "width": 406}}, "lockScreen": {"clock": {"inkTopPt": 110.0, "inkBottomPt": 226.3, "inkHeightPt": 116.7, "inkLeftPt": 66.0, "inkRightPt": 421.7, "inkWidthPt": 356.0, "widthPctOfScreen": 80.9, "heightPctOfScreen": 12.2, "centerYPctOfScreen": 17.6, "stringAspect": 3.05, "digitAspect": 0.61, "_digitAspectNote": "单个数字 宽÷墨迹高。SF 常规宽度约 0.76，所以 iOS 把字压到了**八成左右**，不是极窄。我一度按参考图估成 1.43 并去找最窄的字体（DIN Condensed 2.21、wdth 30），方向整个错了。", "_glyphWidthsPt": [71.7, 70.7, 19.3, 74.7, 41.3], "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"}, "clockStretched": {"_measured": "reference/lock2.png。壁纸是高饱和紫红，时钟是低饱和浅色 —— 用「亮度>0.62 且饱和<0.22」分离，比「原图−模糊」干净得多。", "inkWidthPt": 335.0, "inkHeightPt": 251.3, "inkLeftPt": 49.0, "inkRightPt": 383.7, "inkTopPt": 113.3, "inkBottomPt": 364.3, "widthPctOfScreen": 76.1, "heightPctOfScreen": 26.3, "centerYPctOfScreen": 25.0, "stringAspect": 1.33, "digitAspect": 0.26, "_glyphWidthsPt": [43.3, 69.0, 63.3], "_note": "「1」43.3pt 比其它数字窄（约 65pt）。单字 0.26 ≈ SF 常规 0.76 的三分之一，对应 wdth 轴压到 30–40 一带。"}, "date": {"_measured": "reference/lock2.png，同上按饱和度分离", "inkTopPt": 98.0, "inkHeightPt": 12.0, "inkLeftPt": 78.3, "inkRightPt": 361.0, "_content": "「9月20日周日 · 丙午年八月初十」——**农历是 iOS 原生就带的**。", "_supersedes": "早先从 lock.png 量到的 顶86/高19 混进了壁纸边缘，以这组为准。"}}};
+var M={"statusBar": {"_measured": "reference/home.png，逐个图元单独取包围盒（不是整条带）", "inkTop": 25, "inkBottom": 39.0, "time": {"x0": 60.7, "x1": 106.3, "w": 46.0, "inkTop": 26.0, "inkHeight": 13.3, "fontSize": 18.5, "_fontNote": "**字号 ≠ 墨迹高**。数字的 cap height ≈ 0.72×字号，所以 13.3÷0.72≈18.5pt。\n我一度直接把墨迹高 14.3 当字号写进去，时间小了 1.3 倍 —— 这是「不精致」的主因之一。"}, "signal": {"count": 4, "dotW": 3.7, "dotH": 3.7, "pitch": 6.0, "x0": 312.3, "bottom": 38.7, "_shapeNote": "**是四个等大的圆点，不是递增高度的信号条。**我按老 iOS 的印象画成了递增条。"}, "wifi": {"x0": 341.7, "x1": 360.3, "w": 19.0, "h": 14.0, "top": 25.0, "bottom": 38.7}, "battery": {"x0": 368.3, "x1": 398.3, "w": 30.3, "h": 14.3, "top": 25.0, "bottom": 39.0}}, "homeScreen": {"icon": {"_measured": "从 reference/home.png 的「日历」图标（x105–308, y934–1137）逐行取左上角轮廓，再拟合", "size": 68, "cornerRadiusRatio": 0.25, "cornerExponent": 2.0, "_shapeNote": "**实测是普通圆角矩形（n=2.0），半径＝边长的 25%，残差 0.00018。**\n广为流传的「Apple squircle，超椭圆 n≈5、r=22.37%」对 iOS 26 不成立 —— \n验算：y=12.5% 处圆角矩形给 x=3.35%、实测 3.5%，而 n=5 的超椭圆给 0.16%，差一个数量级。\n我原先抄的就是那个 22.37%，当时标了「未实测」，现在实测推翻了它。"}, "grid": {"columns": 4, "columnPitch": 100.7, "rowPitch": 108.7, "marginLeft": 35, "marginRight": 35, "firstIconRowTop": 311.3}, "label": {"_measured": "标签条带 y 1158–1190px", "inkHeight": 11, "gapBelowIcon": 6.7}, "widget2x2": {"_measured": "组件条带 y 282–811px", "top": 94, "height": 176.7, "left": 31, "right": 408.7, "labelTop": 277.3, "labelHeight": 11}, "searchPill": {"_measured": "胶囊条带 y 2291–2380px", "top": 763.7, "height": 30, "left": 189.3, "width": 61}, "dock": {"_measured": "Dock 条带 y 2465–2816px", "top": 821.7, "height": 117.3, "left": 17, "width": 406}}, "lockScreen": {"clock": {"inkTopPt": 110.0, "inkBottomPt": 226.3, "inkHeightPt": 116.7, "inkLeftPt": 66.0, "inkRightPt": 421.7, "inkWidthPt": 356.0, "widthPctOfScreen": 80.9, "heightPctOfScreen": 12.2, "centerYPctOfScreen": 17.6, "stringAspect": 3.05, "digitAspect": 0.61, "_digitAspectNote": "单个数字 宽÷墨迹高。SF 常规宽度约 0.76，所以 iOS 把字压到了**八成左右**，不是极窄。我一度按参考图估成 1.43 并去找最窄的字体（DIN Condensed 2.21、wdth 30），方向整个错了。", "_glyphWidthsPt": [71.7, 70.7, 19.3, 74.7, 41.3], "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"}, "clockStretched": {"_measured": "reference/lock2.png。壁纸是高饱和紫红，时钟是低饱和浅色 —— 用「亮度>0.62 且饱和<0.22」分离，比「原图−模糊」干净得多。", "inkWidthPt": 335.0, "inkHeightPt": 251.3, "inkLeftPt": 49.0, "inkRightPt": 383.7, "inkTopPt": 113.3, "inkBottomPt": 364.3, "widthPctOfScreen": 76.1, "heightPctOfScreen": 26.3, "centerYPctOfScreen": 25.0, "stringAspect": 1.33, "digitAspect": 0.26, "_glyphWidthsPt": [43.3, 69.0, 63.3], "_note": "「1」43.3pt 比其它数字窄（约 65pt）。单字 0.26 ≈ SF 常规 0.76 的三分之一，对应 wdth 轴压到 30–40 一带。"}, "date": {"_measured": "reference/lock2.png，同上按饱和度分离", "inkTopPt": 98.0, "inkHeightPt": 12.0, "inkLeftPt": 78.3, "inkRightPt": 361.0, "_content": "「9月20日周日 · 丙午年八月初十」——**农历是 iOS 原生就带的**。", "_supersedes": "早先从 lock.png 量到的 顶86/高19 混进了壁纸边缘，以这组为准。"}}};
 var SW=1320, SH=2868, FONT='-apple-system, system-ui, sans-serif';
 
 function seed(){
@@ -346,14 +353,16 @@ function apply(){
   $('fLight').setAttribute('azimuth',S.azi);
   $('fLight').setAttribute('elevation',S.elev);
 
-  ['carrier','sigR','dateL'].forEach(function(id){$(id).setAttribute('fill',ink)});
+  $('statusBar').setAttribute('color',ink);      // 图元用 currentColor
+  $('carrier').setAttribute('fill',ink);
+  $('carrier').textContent=S.time;               // 真机主屏左上角是时间，不是运营商
+  $('dateL').setAttribute('fill',ink);
   $('homeBar').setAttribute('fill',ink);
   $('island').style.display=S.island?'':'none';
   $('rbtns').style.display=S.btns?'':'none';
   $('dateL').textContent=S.lunar?'9月20日 周日 · 丙午年八月初十':'9月20日 周日';
   $('dateL').setAttribute('font-family',"'PingFang SC',"+FONT);
   $('carrier').setAttribute('font-family',"'PingFang SC',"+FONT);
-  $('miniClock').textContent=S.time;
 
   $('json').textContent=JSON.stringify({
     clock:{wdth:S.wdth,wght:S.wght,heightPctOfScreen:S.fsize,centerYPctOfScreen:S.ypos},
@@ -374,48 +383,63 @@ function apply(){
   var mk=function(t,a,parent){var e=document.createElementNS(NS,t);
     for(var k in a)e.setAttribute(k,a[k]); if(parent)parent.appendChild(e); return e};
 
-  /* --- 状态栏右侧：信号四格 / Wi-Fi / 电池，x 用实测值 --- */
-  var bars=$('bars'), barH=[6,9,12,15];
-  for(var i=0;i<4;i++)
-    mk('rect',{x:(SB.signalDots.x0+i*SB.signalDots.pitch)*G,
-      y:(SB.inkTop+SB.inkHeight-barH[i])*G, width:4.2*G, height:barH[i]*G, rx:1.4*G}, bars);
-  // Wi-Fi：三段同心弧 + 圆点
-  var wx=(SB.wifi.x0+SB.wifi.x1)/2*G, wy=(SB.inkTop+SB.inkHeight-1)*G, arc='';
-  [11,7.2,3.4].forEach(function(r){ r*=G;
-    arc+='M'+(wx-r)+' '+(wy-r*0.55)+' A'+r+' '+r+' 0 0 1 '+(wx+r)+' '+(wy-r*0.55)+' '; });
+  /* --- 状态栏右侧：**逐个图元实测**，不是按印象画 ---
+     信号是四个等大 3.7×3.7pt 的圆点贴底（不是递增高度的条，那是老 iOS 的样子）
+     Wi-Fi 19×14pt · 电池 30.3×14.3pt · 时间字号 18.5pt（≠ 墨迹高 13.3） */
+  var bars=$('bars'), sg=SB.signal;
+  for(var i=0;i<sg.count;i++)
+    mk('rect',{x:(sg.x0+i*sg.pitch)*G, y:(sg.bottom-sg.dotH)*G,
+      width:sg.dotW*G, height:sg.dotH*G, rx:sg.dotW*G*0.3}, bars);
+
+  // Wi-Fi：三段同心弧 + 圆点，整体压进实测的 19×14pt
+  var wf=SB.wifi, wcx=(wf.x0+wf.x1)/2*G, wbot=wf.bottom*G, arc='';
+  [1.0,0.62,0.26].forEach(function(k){
+    var r=wf.w/2*k*G, dy=r*0.42;
+    arc+='M'+(wcx-r)+' '+(wbot-dy)+' A'+r+' '+r+' 0 0 1 '+(wcx+r)+' '+(wbot-dy)+' ';
+  });
   $('wifi').setAttribute('d',arc);
   $('wifi').setAttribute('stroke','currentColor');
-  mk('circle',{cx:wx,cy:wy,r:2.1*G,fill:'currentColor'},$('sigR'));
-  // 电池：外框 + 内芯 + 正极点
-  var bx=SB.battery.x0*G, bw=(SB.battery.x1-SB.battery.x0)*G,
-      by=(SB.inkTop+1)*G, bh=(SB.inkHeight-2)*G, batt=$('batt');
-  mk('rect',{x:bx,y:by,width:bw,height:bh,rx:bh*0.32,fill:'none',
-    stroke:'currentColor','stroke-opacity':'.42','stroke-width':2.2*G},batt);
-  mk('rect',{x:bx+2.2*G,y:by+2.2*G,width:bw-4.4*G,height:bh-4.4*G,rx:bh*0.22,fill:'currentColor'},batt);
-  mk('path',{d:'M'+(bx+bw+2.4*G)+' '+(by+bh*0.34)+'v'+(bh*0.32),stroke:'currentColor',
-    'stroke-opacity':'.42','stroke-width':2.6*G,'stroke-linecap':'round'},batt);
+  $('wifi').setAttribute('stroke-width', wf.h*G*0.155);
+  mk('circle',{cx:wcx,cy:wbot-wf.h*G*0.06,r:wf.h*G*0.1,fill:'currentColor'},$('sigR'));
 
-  /* --- 主屏 --- */
-  var hues=[14,32,48,96,150,190,210,232,262,292,320,350];
-  var names=['相册','天气','备忘','音乐','日历','地图','时钟','设置','邮件','浏览','文件','商店'];
+  // 电池：外框 + 内芯 + 正极点，尺寸用实测
+  var bt=SB.battery, bx=bt.x0*G, by=bt.top*G, bw=bt.w*G, bh=bt.h*G, batt=$('batt');
+  var capW=bh*0.17, bodyW=bw-capW-bh*0.09;
+  mk('rect',{x:bx,y:by,width:bodyW,height:bh,rx:bh*0.32,fill:'none',
+    stroke:'currentColor','stroke-opacity':'.38','stroke-width':bh*0.1},batt);
+  mk('rect',{x:bx+bh*0.16,y:by+bh*0.16,width:bodyW-bh*0.32,height:bh-bh*0.32,
+    rx:bh*0.2,fill:'currentColor'},batt);
+  mk('path',{d:'M'+(bx+bodyW+bh*0.11)+' '+(by+bh*0.33)+'v'+(bh*0.34),
+    stroke:'currentColor','stroke-opacity':'.38','stroke-width':capW,'stroke-linecap':'round'},batt);
+
+  /* --- 主屏：优先用从真机截图抠出的**真实图标**（src/icons.json），
+         抠不到才退回色块。素材是 Apple 的，只在本地用、不进仓库，
+         见 tools/extract-icons.mjs。 --- */
   var g=$('appGrid'), sz=H.icon.size*G, rx=sz*H.icon.cornerRadiusRatio;
   var colX=function(c){return (H.grid.marginLeft+c*H.grid.columnPitch)*G};
+  var IC=window.LS_ICONS||null;
+  var names=['日历','照片','提醒事项','News','地图','健康','钱包','设置'];
 
-  // 2×2 组件两个（实测：top 94pt，高 176.7pt，左 31 右 408.7）
-  var wTop=H.widget2x2.top*G, wH=H.widget2x2.height*G;
-  var wW=(H.icon.size*2+ (H.grid.columnPitch-H.icon.size))*G;
-  [0,2].forEach(function(c,i){
-    mk('rect',{x:colX(c),y:wTop,width:wW,height:wH,rx:wH*0.22,
-      fill:'#fff','fill-opacity':'.9'},g);
-    mk('text',{x:colX(c)+wW/2,y:wTop+wH+(H.widget2x2.labelHeight+7)*G,
-      'font-size':H.label.inkHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
-      'font-family':"'PingFang SC',"+FONT}, g).textContent=['天气','日历'][i];
-  });
+  var wNames=['地图','日历'];
+  if(IC&&IC.widgets&&IC.widgets.length){
+    IC.widgets.forEach(function(w,wi){
+      mk('image',{href:w.uri,x:w.x,y:H.widget2x2.top*G,width:w.w,height:H.widget2x2.height*G},g);
+      // 真机组件下方有标签，我们原来漏了
+      mk('text',{x:w.x+w.w/2,y:(H.widget2x2.labelTop+H.widget2x2.labelHeight)*G,
+        'font-size':H.widget2x2.labelHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
+        'font-family':"'PingFang SC',"+FONT,opacity:'.95'},g).textContent=wNames[wi]||'';
+    });
+  }else{
+    var wW=(H.icon.size*2+(H.grid.columnPitch-H.icon.size))*G;
+    [0,2].forEach(function(c){mk('rect',{x:colX(c),y:H.widget2x2.top*G,width:wW,
+      height:H.widget2x2.height*G,rx:H.widget2x2.height*G*0.22,fill:'#fff','fill-opacity':'.9'},g);});
+  }
 
-  // 图标两行（组件占掉了上面两行的位置）
   for(var i2=0;i2<8;i2++){
     var cx=colX(i2%4), cy=(H.grid.firstIconRowTop+Math.floor(i2/4)*H.grid.rowPitch)*G;
-    mk('rect',{x:cx,y:cy,width:sz,height:sz,rx:rx,fill:'hsl('+hues[i2]+' 76% 57%)'},g);
+    var got=IC&&IC.icons&&IC.icons.filter(function(t){return t.row===Math.floor(i2/4)&&t.col===i2%4})[0];
+    if(got) mk('image',{href:got.uri,x:cx,y:cy,width:sz,height:sz},g);
+    else mk('rect',{x:cx,y:cy,width:sz,height:sz,rx:rx,fill:'hsl('+(i2*44+14)+' 76% 57%)'},g);
     mk('text',{x:cx+sz/2,y:cy+sz+(H.label.gapBelowIcon+H.label.inkHeight)*G,
       'font-size':H.label.inkHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
       'font-family':"'PingFang SC',"+FONT,opacity:'.95'},g).textContent=names[i2];
@@ -431,8 +455,10 @@ function apply(){
   mk('rect',{x:H.dock.left*G,y:H.dock.top*G,width:H.dock.width*G,height:H.dock.height*G,
     rx:H.dock.height*G*0.38,fill:'#fff','fill-opacity':'.16'},dk);
   var dy=(H.dock.top+(H.dock.height-H.icon.size)/2)*G;
-  for(var j=0;j<4;j++)
-    mk('rect',{x:colX(j),y:dy,width:sz,height:sz,rx:rx,fill:'hsl('+hues[j*3]+' 72% 55%)'},dk);
+  if(IC&&IC.dock&&IC.dock.length)
+    IC.dock.forEach(function(d){mk('image',{href:d.uri,x:d.x,y:dy,width:sz,height:sz},dk)});
+  else for(var j=0;j<4;j++)
+    mk('rect',{x:colX(j),y:dy,width:sz,height:sz,rx:rx,fill:'hsl('+(j*70+20)+' 72% 55%)'},dk);
 })();
 
 [['wdth','oWdth',0],['wght','oWght',0],['fsize','oFsize',1],['ypos','oYpos',1],
