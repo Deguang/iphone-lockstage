@@ -9,13 +9,17 @@
     "screenshot": "reference/home.png",
     "note": "模拟器默认壁纸是纯黑，测量脚本靠「非黑即内容」切分。换壁纸后该脚本不成立。"
   },
-
   "screen": {
-    "pt": { "w": 440, "h": 956 },
-    "px": { "w": 1320, "h": 2868 },
+    "pt": {
+      "w": 440,
+      "h": 956
+    },
+    "px": {
+      "w": 1320,
+      "h": 2868
+    },
     "scale": 3
   },
-
   "statusBar": {
     "_measured": "墨迹条带 y 75–117px",
     "inkTop": 25,
@@ -23,11 +27,21 @@
     "timeLeft": 60.7,
     "batteryRight": 396.3,
     "_glyphs": "时间 60.7–106.3 · 信号四格 312.3–333.7 · Wi-Fi 341.7–360.3 · 电池 368.3–396.3",
-    "signalDots": { "x0": 312.3, "x1": 333.7, "count": 4, "pitch": 6 },
-    "wifi": { "x0": 341.7, "x1": 360.3 },
-    "battery": { "x0": 368.3, "x1": 396.3 }
+    "signalDots": {
+      "x0": 312.3,
+      "x1": 333.7,
+      "count": 4,
+      "pitch": 6
+    },
+    "wifi": {
+      "x0": 341.7,
+      "x1": 360.3
+    },
+    "battery": {
+      "x0": 368.3,
+      "x1": 396.3
+    }
   },
-
   "dynamicIsland": {
     "_caveat": "**这组数字没有实测**。灵动岛在截图里是纯黑，和黑壁纸无法区分，测量脚本切不出来。下面是 Apple 公开的规格，标出来是为了别把它和实测值混为一谈。",
     "w": 125,
@@ -35,7 +49,6 @@
     "top": 11,
     "centered": true
   },
-
   "homeScreen": {
     "icon": {
       "_measured": "图标行 y 934–1137px，四列连通域",
@@ -80,17 +93,41 @@
       "width": 406
     }
   },
-
   "lockScreen": {
-    "_todo": "锁屏还没实测 —— 模拟器锁屏要按 ⌘L，而 osascript 发按键被系统拦了（缺辅助功能权限）。下面的值沿用 redbook-op 的 assets/library/lockscreen.json，**属于待验证**，拿到锁屏截图后必须重量一遍。",
-    "_status": "unverified",
-    "dateTop": 238,
-    "clockCenterY": 372,
-    "clockFontSize": 228,
-    "buttonBottom": 126,
-    "buttonDiameter": 106,
-    "buttonMargin": 85,
-    "homeIndicator": { "bottom": 30, "w": 360, "h": 12 },
-    "_unitNote": "这一组沿用旧文件的「屏宽千分比」单位，和上面的 pt 不同，实测后要统一。"
+    "_measured": "reference/lock.png，iOS 26.2 / iPhone 17 Pro Max。壁纸非纯黑，改用「原图 − 大核模糊」提取文字，并靠「文字行点亮几十上百像素、壁纸斜边每行只有两三个」把壁纸边缘筛掉。",
+    "_status": "measured",
+    "_variant": "这是**默认**锁屏时钟。iOS 26 还有一个可拖拽的「拉伸」态（数字更高更窄），那是另一套参数，尚未实测。",
+    "clock": {
+      "inkTopPt": 110.0,
+      "inkBottomPt": 226.3,
+      "inkHeightPt": 116.7,
+      "inkLeftPt": 66.0,
+      "inkRightPt": 421.7,
+      "inkWidthPt": 356.0,
+      "widthPctOfScreen": 80.9,
+      "heightPctOfScreen": 12.2,
+      "centerYPctOfScreen": 17.6,
+      "stringAspect": 3.05,
+      "digitAspect": 0.61,
+      "_digitAspectNote": "单个数字 宽÷墨迹高。SF 常规宽度约 0.76，所以 iOS 把字压到了**八成左右**，不是极窄。我一度按参考图估成 1.43 并去找最窄的字体（DIN Condensed 2.21、wdth 30），方向整个错了。",
+      "_glyphWidthsPt": [
+        71.7,
+        70.7,
+        19.3,
+        74.7,
+        41.3
+      ],
+      "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"
+    },
+    "date": {
+      "_measured": "条带 y 258–314px",
+      "inkTopPt": 86.0,
+      "inkHeightPt": 19.0,
+      "inkLeftPt": 82.0,
+      "inkRightPt": 398.7,
+      "_content": "「1月9日周二 · 丙戌年冬月廿一」——**农历是 iOS 原生就带的**，不是我们加的。",
+      "_heightNote": "19pt 的墨迹高包含汉字，比纯拉丁数字高。"
+    },
+    "_notCaptured": "这张截图里没有状态栏文字（运营商/电量），底部也没有手电筒/相机和 home indicator —— 可能是刚锁屏的过渡态。这几项仍属未实测，需要另取一张。"
   }
 }
