@@ -51,10 +51,11 @@
   },
   "homeScreen": {
     "icon": {
-      "_measured": "图标行 y 934–1137px，四列连通域",
+      "_measured": "从 reference/home.png 的「日历」图标（x105–308, y934–1137）逐行取左上角轮廓，再拟合",
       "size": 68,
-      "cornerRadiusRatio": 0.2237,
-      "_radiusNote": "22.37% 是 Apple squircle 的公开比例，**未实测**（圆角在黑底上量不准）"
+      "cornerRadiusRatio": 0.25,
+      "cornerExponent": 2.0,
+      "_shapeNote": "**实测是普通圆角矩形（n=2.0），半径＝边长的 25%，残差 0.00018。**\n广为流传的「Apple squircle，超椭圆 n≈5、r=22.37%」对 iOS 26 不成立 —— \n验算：y=12.5% 处圆角矩形给 x=3.35%、实测 3.5%，而 n=5 的超椭圆给 0.16%，差一个数量级。\n我原先抄的就是那个 22.37%，当时标了「未实测」，现在实测推翻了它。"
     },
     "grid": {
       "columns": 4,
@@ -96,7 +97,7 @@
   "lockScreen": {
     "_measured": "reference/lock.png，iOS 26.2 / iPhone 17 Pro Max。壁纸非纯黑，改用「原图 − 大核模糊」提取文字，并靠「文字行点亮几十上百像素、壁纸斜边每行只有两三个」把壁纸边缘筛掉。",
     "_status": "measured",
-    "_variant": "这是**默认**锁屏时钟。iOS 26 还有一个可拖拽的「拉伸」态（数字更高更窄），那是另一套参数，尚未实测。",
+    "_variant": "iOS 26 锁屏时钟有**两个态**，参数差很多，别混：默认态和可拖拽的拉伸态。两个都实测了。",
     "clock": {
       "inkTopPt": 110.0,
       "inkBottomPt": 226.3,
@@ -120,14 +121,35 @@
       "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"
     },
     "date": {
-      "_measured": "条带 y 258–314px",
-      "inkTopPt": 86.0,
-      "inkHeightPt": 19.0,
-      "inkLeftPt": 82.0,
-      "inkRightPt": 398.7,
-      "_content": "「1月9日周二 · 丙戌年冬月廿一」——**农历是 iOS 原生就带的**，不是我们加的。",
-      "_heightNote": "19pt 的墨迹高包含汉字，比纯拉丁数字高。"
+      "_measured": "reference/lock2.png，同上按饱和度分离",
+      "inkTopPt": 98.0,
+      "inkHeightPt": 12.0,
+      "inkLeftPt": 78.3,
+      "inkRightPt": 361.0,
+      "_content": "「9月20日周日 · 丙午年八月初十」——**农历是 iOS 原生就带的**。",
+      "_supersedes": "早先从 lock.png 量到的 顶86/高19 混进了壁纸边缘，以这组为准。"
     },
-    "_notCaptured": "这张截图里没有状态栏文字（运营商/电量），底部也没有手电筒/相机和 home indicator —— 可能是刚锁屏的过渡态。这几项仍属未实测，需要另取一张。"
+    "_notCaptured": "这张截图里没有状态栏文字（运营商/电量），底部也没有手电筒/相机和 home indicator —— 可能是刚锁屏的过渡态。这几项仍属未实测，需要另取一张。",
+    "clockStretched": {
+      "_measured": "reference/lock2.png。壁纸是高饱和紫红，时钟是低饱和浅色 —— 用「亮度>0.62 且饱和<0.22」分离，比「原图−模糊」干净得多。",
+      "inkWidthPt": 335.0,
+      "inkHeightPt": 251.3,
+      "inkLeftPt": 49.0,
+      "inkRightPt": 383.7,
+      "inkTopPt": 113.3,
+      "inkBottomPt": 364.3,
+      "widthPctOfScreen": 76.1,
+      "heightPctOfScreen": 26.3,
+      "centerYPctOfScreen": 25.0,
+      "stringAspect": 1.33,
+      "digitAspect": 0.26,
+      "_glyphWidthsPt": [
+        43.3,
+        69.0,
+        63.3
+      ],
+      "_note": "「1」43.3pt 比其它数字窄（约 65pt）。单字 0.26 ≈ SF 常规 0.76 的三分之一，对应 wdth 轴压到 30–40 一带。"
+    },
+    "_lesson": "我一度把用户参考图（拉伸态）的比例，套到从默认态量出的位置上，两边都不对。**先确认量的是哪个态，再谈数字。**"
   }
 }
