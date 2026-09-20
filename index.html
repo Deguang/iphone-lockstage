@@ -40,6 +40,13 @@ h1{font-size:19px;font-weight:600;margin:0}
   color:var(--muted);font-size:12.5px;cursor:pointer;background:var(--panel)}
 .drop:hover,.drop.over{border-color:var(--accent);color:var(--text)}
 .drop input{display:none}
+.batch{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:7px;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px}
+.batch figure{margin:0;cursor:pointer}
+.batch img{width:100%;object-fit:cover;border-radius:5px;border:1px solid var(--line);display:block}
+.batch figcaption{font-size:10px;color:var(--muted);text-align:center;margin-top:3px;
+  font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.batch figure:hover img{border-color:var(--accent)}
 .hint{color:var(--muted);font-size:12px;text-align:center;line-height:1.6;margin:0}
 kbd{font-family:var(--mono);background:var(--panel-2);border:1px solid var(--line);border-radius:4px;
   padding:1px 5px;font-size:11px}
@@ -149,7 +156,13 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 
     <label class="drop" id="drop" tabindex="0">拖一张壁纸进来，或点击选择
       <input type="file" id="file" accept="image/*"></label>
-    <p class="hint">调好用 <kbd>⌘⇧4</kbd> 框选手机截图 —— 沙箱禁下载</p>
+    <button class="copy" id="dlBtn" type="button" style="margin-top:0">下载这一张 · 1320×2868</button>
+    <button class="copy" id="dlPairBtn" type="button" style="margin-top:6px;background:var(--panel-2);color:var(--text);border:1px solid var(--line)">下载并排 · 锁屏+主屏 3:4</button>
+    <label class="drop" id="batchDrop" tabindex="0" style="margin-top:4px">
+      批量：拖多张壁纸进来，每张出锁屏、主屏、并排三张
+      <input type="file" id="batchFile" accept="image/*" multiple></label>
+    <div id="batchOut" class="batch" hidden></div>
+    <p class="hint" id="dlHint">整块手机就是一个 SVG，直接光栅化导出 —— 不是把 DOM 猜着重画一遍</p>
   </div>
 
   <div>
@@ -436,14 +449,15 @@ $('tMode').addEventListener('click',function(){
   b.addEventListener('click',function(){S[t[1]]=!S[t[1]];b.setAttribute('aria-pressed',String(S[t[1]]));apply()});
 });
 
-function showTab(lock){
-  $('tabLock').setAttribute('aria-selected',String(lock));
-  $('tabHome').setAttribute('aria-selected',String(!lock));
-  $('lockLayer').style.display=lock?'':'none';
-  $('homeLayer').style.display=lock?'none':'';
+function showTab(p){
+  PAGE=(p===true?'lock':p===false?'home':p);
+  $('tabLock').setAttribute('aria-selected',String(PAGE==='lock'));
+  $('tabHome').setAttribute('aria-selected',String(PAGE==='home'));
+  $('lockLayer').style.display=PAGE==='lock'?'':'none';
+  $('homeLayer').style.display=PAGE==='home'?'':'none';
 }
-$('tabLock').addEventListener('click',function(){showTab(true)});
-$('tabHome').addEventListener('click',function(){showTab(false)});
+$('tabLock').addEventListener('click',function(){showTab('lock')});
+$('tabHome').addEventListener('click',function(){showTab('home')});
 
 function readFile(f){
   if(!f||!/^image\//.test(f.type))return;
@@ -460,11 +474,182 @@ $('copyBtn').addEventListener('click',function(){
   if(navigator.clipboard)navigator.clipboard.writeText($('json').textContent);
   var self=this;self.textContent='已复制';setTimeout(function(){self.textContent='复制 JSON'},1400);
 });
+/* ================= 导出 =================
+   整块手机是**一个 SVG**，素材全是 data URI、时钟是字形路径，
+   所以序列化 → <img> 载入 → drawImage 进 canvas 就是像素精确的。
+   **不用 html2canvas 那类**：它们把 DOM 重新解释一遍去画，
+   遇到滤镜、遮罩、外链字体就开始猜，猜错也不报错。
+   注意点：SVG 作为 <img> 载入是隔离上下文，拿不到网页字体、但拿得到系统字体 ——
+   日期用的 PingFang SC 是 macOS 系统字体，所以没问题。 */
+var PAGE='lock';
+
+/** 当前页渲成 PNG blob（1320×2868） */
+function renderPNG(){
+ return new Promise(function(resolve){
+  var svg=$('scr').cloneNode(true);
+  // 把非当前页那层整个摘掉。只靠 style.display=none 不保险：
+  // 序列化后光栅化时漏出过 Dock 的底框。
+  ['lock','home'].forEach(function(p){
+    if(p===PAGE) return;
+    var el=svg.querySelector('#'+p+'Layer');
+    if(el&&el.parentNode) el.parentNode.removeChild(el);
+  });
+  svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  svg.setAttribute('width',SW); svg.setAttribute('height',SH);
+  var url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],
+    {type:'image/svg+xml;charset=utf-8'}));
+  var img=new Image();
+  img.onload=function(){
+    var c=document.createElement('canvas'); c.width=SW; c.height=SH;
+    c.getContext('2d').drawImage(img,0,0,SW,SH);
+    URL.revokeObjectURL(url);
+    c.toBlob(function(b){resolve(b||null)},'image/png');
+  };
+  img.onerror=function(){ URL.revokeObjectURL(url);
+    $('dlHint').textContent='SVG 载入失败 —— 可能有素材不是 data URI'; resolve(null); };
+  img.src=url;
+ });
+}
+
+function blobToImage(b){
+  return new Promise(function(res,rej){
+    var u=URL.createObjectURL(b), im=new Image();
+    im.onload=function(){URL.revokeObjectURL(u);res(im)};
+    im.onerror=function(){URL.revokeObjectURL(u);rej()};
+    im.src=u;
+  });
+}
+
+/**
+ * 并排 3:4：锁屏和主屏左右排在一张 1500×2000 里。
+ * 发布图内页用这个 —— 一张图同时交代「锁屏长什么样」和「图标压上去还读不读得清」，
+ * 比分成两张更省位置，而 3:4 正好是信息流里单图的最大竖版比例。
+ * 背景取壁纸本身的主色调，不用灰底。
+ */
+async function renderPair(){
+  var keep=PAGE;
+  showTab('lock'); apply(); await new Promise(function(r){setTimeout(r,80)});
+  var a=await renderPNG();
+  showTab('home'); apply(); await new Promise(function(r){setTimeout(r,80)});
+  var b=await renderPNG();
+  showTab(keep); apply();
+  if(!a||!b) return null;
+  var W=1500,H=2000, gap=Math.round(W*0.045), side=Math.round(W*0.022);
+  var pw=Math.round((W-gap-side*2)/2), ph=Math.round(pw*SH/SW);
+  if(ph>H*0.94){ ph=Math.round(H*0.94); pw=Math.round(ph*SW/SH); }
+  var c=document.createElement('canvas'); c.width=W; c.height=H;
+  var x=c.getContext('2d');
+  // 背景：取壁纸缩到 1px 的平均色，压暗一档
+  var wpImg=await new Promise(function(r){var i=new Image();i.onload=function(){r(i)};i.onerror=function(){r(null)};i.src=wpURL;});
+  var bg='#1b1e24';
+  if(wpImg){
+    var t=document.createElement('canvas'); t.width=1;t.height=1;
+    t.getContext('2d').drawImage(wpImg,0,0,1,1);
+    var d=t.getContext('2d').getImageData(0,0,1,1).data;
+    bg='rgb('+Math.round(d[0]*0.42)+','+Math.round(d[1]*0.42)+','+Math.round(d[2]*0.42)+')';
+  }
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  var y0=Math.round((H-ph)/2), x0=side, x1=side+pw+gap;
+  var ia=await blobToImage(a), ib=await blobToImage(b);
+  var r=Math.round(pw*0.11);
+  [[ia,x0],[ib,x1]].forEach(function(p){
+    x.save();
+    x.beginPath();
+    if(x.roundRect) x.roundRect(p[1],y0,pw,ph,r); else x.rect(p[1],y0,pw,ph);
+    x.clip();
+    x.drawImage(p[0],p[1],y0,pw,ph);
+    x.restore();
+  });
+  return await new Promise(function(res){c.toBlob(function(b2){res(b2)},'image/png')});
+}
+
+function fileName(tag){
+  return 'lockstage_'+(tag||PAGE)+'_'+S.time.replace(':','')+'.png';
+}
+function save(blob,name){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){URL.revokeObjectURL(a.href)},3000);
+}
+$('dlBtn').addEventListener('click',function(){
+  renderPNG().then(function(b){ if(b){save(b,fileName()); $('dlHint').textContent='已导出 '+SW+'×'+SH;} });
+});
+$('dlPairBtn').addEventListener('click',function(){
+  $('dlHint').textContent='合成中…';
+  renderPair().then(function(b){
+    if(b){ save(b,fileName('pair')); $('dlHint').textContent='已导出并排 1500×2000'; }
+    else $('dlHint').textContent='合成失败';
+  });
+});
+
+/* ---------- 批量 ---------- */
+function readAsDataURL(f){
+  return new Promise(function(res,rej){
+    var r=new FileReader(); r.onload=function(){res(r.result)}; r.onerror=rej; r.readAsDataURL(f);
+  });
+}
+async function batch(files){
+  var box=$('batchOut'); box.hidden=false; box.innerHTML='';
+  var keep=wpURL, results=[];
+  var add=function(blob,name){
+    results.push({blob:blob,name:name});
+    var fig=document.createElement('figure');
+    var im=document.createElement('img'); im.src=URL.createObjectURL(blob); im.alt=name;
+    var cap=document.createElement('figcaption'); cap.textContent=name;
+    fig.appendChild(im); fig.appendChild(cap); fig.title='点击下载 '+name;
+    fig.addEventListener('click',function(){save(blob,name)});
+    box.appendChild(fig);
+  };
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    if(!/^image\//.test(f.type)) continue;
+    wpURL=await readAsDataURL(f);
+    var base=f.name.replace(/\.[^.]+$/,'');
+    $('dlHint').textContent='处理 '+(i+1)+'/'+files.length+'：'+base;
+    for(var p=0;p<2;p++){
+      showTab(p===0?'lock':'home'); apply();
+      await new Promise(function(r){setTimeout(r,80)});
+      var b=await renderPNG();
+      if(b) add(b, base+'_'+(p===0?'lock':'home')+'.png');
+    }
+    var pair=await renderPair();
+    if(pair) add(pair, base+'_pair.png');
+  }
+  wpURL=keep; showTab('lock'); apply();
+  if(results.length){
+    var all=document.createElement('button');
+    all.className='copy'; all.type='button'; all.style.gridColumn='1/-1';
+    all.textContent='全部下载（'+results.length+' 张）';
+    all.addEventListener('click',function(){
+      results.forEach(function(r,k){ setTimeout(function(){save(r.blob,r.name)}, k*260); });
+    });
+    box.appendChild(all);
+    $('dlHint').textContent='批量完成 '+results.length+' 张，点缩略图可单张下载';
+  } else $('dlHint').textContent='没有可导出的图片';
+}
+$('batchFile').addEventListener('change',function(){ if(this.files.length) batch(this.files); });
+(function(){
+  var bz=$('batchDrop');
+  ['dragenter','dragover'].forEach(function(e){bz.addEventListener(e,function(ev){ev.preventDefault();bz.classList.add('over')})});
+  ['dragleave','drop'].forEach(function(e){bz.addEventListener(e,function(ev){ev.preventDefault();bz.classList.remove('over')})});
+  bz.addEventListener('drop',function(ev){ if(ev.dataTransfer.files.length) batch(ev.dataTransfer.files); });
+  bz.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();$('batchFile').click()} });
+})();
+
 $('themeBtn').addEventListener('click',function(){
   var r=document.documentElement;
   r.setAttribute('data-theme',r.getAttribute('data-theme')==='light'?'dark':'light');
 });
 
 apply();
+
+/* 调试/自动化出口。页面功能不依赖它，但有了它就能在外部脚本里
+   直接调导出，不必模拟点击（下载会落到浏览器下载目录，不好取回）。 */
+window.lockstage={
+  render:renderPNG, pair:renderPair, apply:apply, showTab:showTab,
+  setWallpaper:function(u){ wpURL=u; apply(); },
+  state:S
+};
 })();
 </script>
