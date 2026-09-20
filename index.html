@@ -100,6 +100,11 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
     <div class="phone">
       <svg id="scr" viewBox="0 0 1320 2868" preserveAspectRatio="xMidYMid slice">
         <defs>
+          <!-- 图标标签的投影。实测 iOS 就是这么做的（白字 + 暗晕），
+               所以标签不需要跟着壁纸换色。 -->
+          <filter id="labSh" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="1.6" stdDeviation="3.2" flood-color="#000" flood-opacity="0.55"/>
+          </filter>
         </defs>
 
         <!-- 壁纸 -->
@@ -345,12 +350,10 @@ function apply(){
   if(!_inkImg||_inkImg.src!==wpURL){ _inkImg=new Image(); _inkImg.onload=function(){apply()}; _inkImg.src=wpURL; }
   var cb=M.lockScreen.clockStretched;
   S.dark=autoInk({topPt:cb.inkTopPt,hPt:cb.inkHeightPt});
-  // 主屏标签单独算：图标两行标签跨 firstIconRowTop+icon 到 +rowPitch+icon+label
-  var HG=M.homeScreen;
-  var labDark=autoInk({topPt:HG.grid.firstIconRowTop+HG.icon.size,
-                       hPt:HG.grid.rowPitch+HG.label.inkHeight+HG.label.gapBelowIcon});
-  var labInk=labDark?'#2c2c2e':'#ffffff';
-  $('homeLayer').querySelectorAll('text').forEach(function(t){ t.setAttribute('fill',labInk); });
+  /* 图标标签**不跟着变深** —— iOS 用的是「白字 + 阴影」。
+     实测 reference/cur.png（彩色壁纸那张）：白字周围 3–5px 环带比远处背景
+     暗 18.8，说明有投影。白字加阴影在任何壁纸上都读得清，
+     比"背景亮就换深字"更稳 —— 后者遇到红树那种深浅混杂的背景两头不讨好。 */
   $('tInk').setAttribute('aria-pressed',String(S.dark));
   var ink=S.dark?'#3a3a3c':'#ffffff';
   $('wpImg').setAttribute('href',wpURL);
@@ -428,7 +431,7 @@ function apply(){
       // 真机组件下方有标签，我们原来漏了
       mk('text',{x:w.x+w.w/2,y:(H.widget2x2.labelTop+H.widget2x2.labelHeight)*G,
         'font-size':H.widget2x2.labelHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
-        'font-family':"'PingFang SC',"+FONT,opacity:'.95'},g).textContent=wNames[wi]||'';
+        'font-family':"'PingFang SC',"+FONT,fill:'#fff',filter:'url(#labSh)'},g).textContent=wNames[wi]||'';
     });
   }else{
     var wW=(H.icon.size*2+(H.grid.columnPitch-H.icon.size))*G;
@@ -443,7 +446,7 @@ function apply(){
     else mk('rect',{x:cx,y:cy,width:sz,height:sz,rx:rx,fill:'hsl('+(i2*44+14)+' 76% 57%)'},g);
     mk('text',{x:cx+sz/2,y:cy+sz+(H.label.gapBelowIcon+H.label.inkHeight)*G,
       'font-size':H.label.inkHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
-      'font-family':"'PingFang SC',"+FONT,opacity:'.95'},g).textContent=names[i2];
+      'font-family':"'PingFang SC',"+FONT,fill:'#fff',filter:'url(#labSh)'},g).textContent=names[i2];
   }
 
   /* --- 搜索胶囊 + Dock --- */
