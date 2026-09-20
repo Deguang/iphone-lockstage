@@ -50,11 +50,27 @@ if (meta.width !== M.screen.px.w) {
  * 不挖角的话四角会带上壁纸的黑色，叠到别的壁纸上就是四个黑角 —— 踩过。
  * 圆角半径用实测值：图标 25% 边长、组件 18.6% 宽（tools 里量的，见 ios-metrics.json）。
  */
+/**
+ * 裁一块出来，按圆角挖掉四角，转 data URI。
+ *
+ * ⚠️ **遮罩要比图标本身内缩一两像素。**
+ * 图标是从**黑底**截图上抠的，边缘那一圈抗锯齿像素混了黑背景 ——
+ * 叠在深色壁纸上看不出来，叠在浅色壁纸上就是一圈黑边。
+ * 把那圈受污染的像素切掉即可；68pt 的图标少两像素看不出来，黑边却没了。
+ *
+ * （更严谨的做法是拿黑底和白底两张截图解 alpha matting，
+ *   但需要同一壁纸位置的干净背景，成本远高于内缩两像素。）
+ */
+const EDGE_INSET = 2;   // px，@3x 下约 0.67pt
+
 async function cut(left, top, w, h, radiusRatio, src = file) {
-  const r = Math.round(Math.min(w, h) * radiusRatio);
+  const inset = EDGE_INSET;
+  const iw = w - inset * 2, ih = h - inset * 2;
+  const r = Math.round(Math.min(iw, ih) * radiusRatio);
   const mask = Buffer.from(
-    `<svg width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${r}" ry="${r}" fill="#fff"/></svg>`);
-  const buf = await sharp(src).extract({ left, top, width: w, height: h })
+    `<svg width="${iw}" height="${ih}"><rect width="${iw}" height="${ih}" rx="${r}" ry="${r}" fill="#fff"/></svg>`);
+  const buf = await sharp(src)
+    .extract({ left: left + inset, top: top + inset, width: iw, height: ih })
     .composite([{ input: mask, blend: 'dest-in' }])
     .png().toBuffer();
   return 'data:image/png;base64,' + buf.toString('base64');
