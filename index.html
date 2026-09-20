@@ -199,7 +199,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
       <div class="chips">
         <button class="chip" id="tIsland" aria-pressed="true" type="button">灵动岛</button>
         <button class="chip" id="tLunar" aria-pressed="true" type="button">农历</button>
-        <button class="chip" id="tInk" aria-pressed="false" type="button">深色文字</button>
+        <button class="chip" id="tInk" aria-pressed="false" type="button">文字·自动</button>
         <button class="chip" id="tMode" aria-pressed="true" type="button">拉伸态时钟</button>
       </div>
     </section>
@@ -247,7 +247,7 @@ var wpURL=seed();
 var lastLayout=null;
 /* 默认值＝**拉伸态实测**：宽 76.1% 屏宽、中线 25.0% 屏高（src/ios-metrics.json）。
    wdth 40 对应实测单字宽高比 0.26 ≈ SF 常规 0.76 的三分之一。 */
-var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,time:nowHHMM()};
+var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,inkMode:'auto',time:nowHHMM()};
 
 /**
  * 用**字形路径**排时钟，不用 <text>。
@@ -300,7 +300,58 @@ function paintGlyphs(host,L){
   });
 }
 
+/**
+ * 按**实测对比度**自动选深浅文字，而不是拍一个亮度阈值。
+ *
+ * 量时钟带的平均亮度，算白字和深字各自的 WCAG 对比度，取高的那个。
+ * 实测镜面湖四张：孤岛 白字 1.31:1 / 深字 8.65:1（白字基本看不见），
+ * 红树 1.49 vs 7.64，雪峰 3.10 vs 3.66，满月 6.23 vs 1.82。
+ * **四张里三张该用深色**，而先前一律用白 —— 机模拿 1.31:1 的白字展示，
+ * 对买家就是误导：看起来这张壁纸很难用。
+ *
+ * （旧做法是 coverGen 里 topLuma>0.52 切黑白，那个阈值是拍的。
+ *   直接比对比度不需要阈值，也不依赖我猜。）
+ */
+var _inkCanvas=document.createElement('canvas');
+/**
+ * @param {object} band 看哪一段背景（pt，按 956 高换算）。
+ *   锁屏看时钟墨迹带；主屏看图标标签所在的行 —— 两处背景可能一深一浅。
+ *
+ * iOS 26 本身就会做这件事：图标标题和锁屏文字都随墙纸明暗自适应，
+ * 白字压在亮底上是系统的临时识别错误，不是正常状态。
+ */
+function autoInk(band){
+  if(S.inkMode!=='auto') return S.inkMode==='dark';
+  try{
+    var img=_inkImg;
+    if(!img||!img.complete||!img.naturalWidth) return S.dark;
+    var c=_inkCanvas; c.width=16;c.height=16;
+    var x=c.getContext('2d',{willReadFrequently:true});
+    band=band||{topPt:M.lockScreen.clockStretched.inkTopPt,hPt:M.lockScreen.clockStretched.inkHeightPt};
+    var sy=img.naturalHeight*(band.topPt/956), sh=img.naturalHeight*(band.hPt/956);
+    x.drawImage(img,0,sy,img.naturalWidth,sh,0,0,16,16);
+    var d=x.getImageData(0,0,16,16).data, L=0;
+    var lin=function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)};
+    for(var i=0;i<256;i++) L+=0.2126*lin(d[i*4])+0.7152*lin(d[i*4+1])+0.0722*lin(d[i*4+2]);
+    L/=256;
+    var ratio=function(a,b){var h=Math.max(a,b),l=Math.min(a,b);return (h+0.05)/(l+0.05)};
+    var white=ratio(1.0,L), dark=ratio(0.0452,L);   // #3a3a3c 的相对亮度
+    return dark>white;
+  }catch(e){ return S.dark; }
+}
+var _inkImg=null;
+
 function apply(){
+  if(!_inkImg||_inkImg.src!==wpURL){ _inkImg=new Image(); _inkImg.onload=function(){apply()}; _inkImg.src=wpURL; }
+  var cb=M.lockScreen.clockStretched;
+  S.dark=autoInk({topPt:cb.inkTopPt,hPt:cb.inkHeightPt});
+  // 主屏标签单独算：图标两行标签跨 firstIconRowTop+icon 到 +rowPitch+icon+label
+  var HG=M.homeScreen;
+  var labDark=autoInk({topPt:HG.grid.firstIconRowTop+HG.icon.size,
+                       hPt:HG.grid.rowPitch+HG.label.inkHeight+HG.label.gapBelowIcon});
+  var labInk=labDark?'#2c2c2e':'#ffffff';
+  $('homeLayer').querySelectorAll('text').forEach(function(t){ t.setAttribute('fill',labInk); });
+  $('tInk').setAttribute('aria-pressed',String(S.dark));
   var ink=S.dark?'#3a3a3c':'#ffffff';
   $('wpImg').setAttribute('href',wpURL);
   var L=layoutClock();
@@ -444,7 +495,13 @@ $('tMode').addEventListener('click',function(){
   apply();
 });
 
-[['tIsland','island'],['tLunar','lunar'],['tInk','dark']].forEach(function(t){
+$('tInk').addEventListener('click',function(){
+  // 自动 → 强制浅 → 强制深 → 自动
+  S.inkMode=S.inkMode==='auto'?'light':S.inkMode==='light'?'dark':'auto';
+  this.textContent=S.inkMode==='auto'?'文字·自动':S.inkMode==='light'?'文字·强制浅':'文字·强制深';
+  apply();
+});
+[['tIsland','island'],['tLunar','lunar']].forEach(function(t){
   var b=$(t[0]);
   b.addEventListener('click',function(){S[t[1]]=!S[t[1]];b.setAttribute('aria-pressed',String(S[t[1]]));apply()});
 });
