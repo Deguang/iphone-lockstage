@@ -3,3 +3,5 @@ reference/*.png
 .DS_Store
 src/icons.js
 src/glyphs.js
+tools/glyph-paths/glyph-paths
+*.dSYM/
