@@ -20,6 +20,13 @@ import fs from 'fs';
 import path from 'path';
 
 const file = process.argv[2] || 'reference/home.png';
+/* 组件可以来自另一张截图。
+   原因：全新模拟器的地图/日历组件是**空白**的（没有位置和日历数据）。
+   跑一次 Maps/Calendar 才有内容，但那会弹定位权限对话框挡住屏幕中部 ——
+   而组件在顶部不受影响，所以图标用黑底那张、组件用有内容那张，各取所需。
+   `--widgets <png>` 指定组件来源。 */
+const wIdx = process.argv.indexOf('--widgets');
+const widgetFile = wIdx > 0 ? process.argv[wIdx + 1] : file;
 if (!fs.existsSync(file)) {
   console.error(`截图不存在: ${file}\n先跑: xcrun simctl io booted screenshot ${file}`);
   process.exit(2);
@@ -43,11 +50,11 @@ if (meta.width !== M.screen.px.w) {
  * 不挖角的话四角会带上壁纸的黑色，叠到别的壁纸上就是四个黑角 —— 踩过。
  * 圆角半径用实测值：图标 25% 边长、组件 18.6% 宽（tools 里量的，见 ios-metrics.json）。
  */
-async function cut(left, top, w, h, radiusRatio) {
+async function cut(left, top, w, h, radiusRatio, src = file) {
   const r = Math.round(Math.min(w, h) * radiusRatio);
   const mask = Buffer.from(
     `<svg width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${r}" ry="${r}" fill="#fff"/></svg>`);
-  const buf = await sharp(file).extract({ left, top, width: w, height: h })
+  const buf = await sharp(src).extract({ left, top, width: w, height: h })
     .composite([{ input: mask, blend: 'dest-in' }])
     .png().toBuffer();
   return 'data:image/png;base64,' + buf.toString('base64');
@@ -59,7 +66,7 @@ const size = px(H.icon.size);
 const colX = (c) => px(H.grid.marginLeft + c * H.grid.columnPitch);
 const rowY = (r) => px(H.grid.firstIconRowTop + r * H.grid.rowPitch);
 
-const out = { _source: path.basename(file), _captured: M._captured, icons: [], widgets: [], dock: [] };
+const out = { _source: path.basename(file), _widgetSource: path.basename(widgetFile), _captured: M._captured, icons: [], widgets: [], dock: [] };
 
 // 图标：按实测网格逐格裁。空格子（纯黑）跳过
 for (let r = 0; r < 2; r++) {
@@ -72,24 +79,17 @@ for (let r = 0; r < 2; r++) {
   }
 }
 
-// 小组件：实测条带 y top..top+height，左右用列投影找边界
+// 小组件：位置直接用实测网格算，**不再靠「非黑即内容」找边界** ——
+// 组件那张截图的壁纸不一定是黑的，投影法会失效。
 {
   const wy = px(H.widget2x2.top), wh = px(H.widget2x2.height);
-  const { data, info } = await sharp(file)
-    .extract({ left: 0, top: wy, width: M.screen.px.w, height: wh })
-    .greyscale().raw().toBuffer({ resolveWithObject: true });
-  const hit = [];
-  for (let x = 0; x < info.width; x++) {
-    let n = 0;
-    for (let y = 0; y < info.height; y++) if (data[y * info.width + x] > 30) n++;
-    hit.push(n > 10);
+  const left0 = px(H.widget2x2.left);
+  const right1 = px(H.widget2x2.right);
+  const gap = px(H.grid.columnPitch - H.icon.size);      // 两个组件之间的空隙
+  const ww = Math.round((right1 - left0 - gap) / 2);
+  for (const x0 of [left0, left0 + ww + gap]) {
+    out.widgets.push({ x: x0, w: ww, uri: await cut(x0, wy, ww, wh, WIDGET_R, widgetFile) });
   }
-  const segs = [];
-  let s = -1;
-  for (let x = 0; x < info.width; x++) {
-    if (hit[x]) { if (s < 0) s = x; } else if (s >= 0) { if (x - s > 40) segs.push([s, x - 1]); s = -1; }
-  }
-  for (const [x0, x1] of segs) out.widgets.push({ x: x0, w: x1 - x0 + 1, uri: await cut(x0, wy, x1 - x0 + 1, wh, WIDGET_R) });
 }
 
 // Dock 图标：在 Dock 条带里按列投影找

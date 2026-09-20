@@ -32,7 +32,9 @@ h1{font-size:19px;font-weight:600;margin:0}
    所有图层共用这一套坐标，不再有「遮罩一套、滤镜另一套」的对不上问题。 */
 .phone{width:100%;aspect-ratio:1320/2868;border-radius:11%/5%;overflow:hidden;background:#000;
   box-shadow:0 20px 64px rgba(0,0,0,.5),0 0 0 1px var(--line);display:block}
-.phone svg{display:block;width:100%;height:100%}
+.phone svg{display:block;width:100.4%;height:100.4%;margin:-0.2% 0 0 -0.2%}
+/* 略微放大并回退一点：.phone 的 aspect-ratio 取整会差半像素，
+   直接 100% 会在右/下边露出一条 1px 的底色缝。踩过。 */
 
 .drop{border:1px dashed var(--line);border-radius:9px;padding:11px;text-align:center;
   color:var(--muted);font-size:12.5px;cursor:pointer;background:var(--panel)}
@@ -143,7 +145,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 
           <!-- 原生件。**全部来自 reference/*.png 实测**，单位 pt×3=px，见 src/ios-metrics.json -->
           <rect id="island" x="472" y="33" width="375" height="110" rx="55" fill="#000"/>
-          <text id="dateL" x="660" y="330" font-size="42" font-weight="600" text-anchor="middle"
+          <text id="dateL" x="660" y="340" font-size="44" font-weight="600" text-anchor="middle"
                 opacity=".95">9月20日周日 · 丙午年八月初十</text>
           <g id="rbtns">
             <circle cx="178" cy="2500" r="68" fill="#EBEBF0" fill-opacity=".26"/>
@@ -182,7 +184,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
         <div class="row"><label for="wght">字重 <b>wght</b></label>
           <input type="range" id="wght" min="1" max="1000" step="10" value="280"><output id="oWght">280</output></div>
         <div class="row"><label for="fsize">宽度 <b>占屏%</b></label>
-          <input type="range" id="fsize" min="30" max="98" step="1" value="88"><output id="oFsize">88</output></div>
+          <input type="range" id="fsize" min="30" max="98" step="1" value="88"><output id="oFsize">22.4</output></div>
         <div class="row"><label for="ypos">中线 <b>屏高%</b></label>
           <input type="range" id="ypos" min="12" max="70" step="0.5" value="24"><output id="oYpos">24</output></div>
       </div>
@@ -198,11 +200,11 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
         <div class="row"><label for="edge">边缘集中</label>
           <input type="range" id="edge" min="0.05" max="1" step="0.01" value="0.34"><output id="oEdge">0.34</output></div>
         <div class="row"><label for="frost">磨砂 <b>blur</b></label>
-          <input type="range" id="frost" min="0" max="20" step="0.5" value="3"><output id="oFrost">3</output></div>
+          <input type="range" id="frost" min="0" max="20" step="0.5" value="1"><output id="oFrost">1</output></div>
         <div class="row"><label for="lift">提亮</label>
-          <input type="range" id="lift" min="0.6" max="1.8" step="0.01" value="1.12"><output id="oLift">1.12</output></div>
+          <input type="range" id="lift" min="0.6" max="1.8" step="0.01" value="1.06"><output id="oLift">1.06</output></div>
         <div class="row"><label for="tint">染色</label>
-          <input type="range" id="tint" min="0" max="0.6" step="0.01" value="0.14"><output id="oTint">0.14</output></div>
+          <input type="range" id="tint" min="0" max="0.6" step="0.01" value="0.05"><output id="oTint">0.05</output></div>
       </div>
       <div class="phead" style="border-top:1px solid var(--line)"><h2>斜面高光</h2><em>feSpecularLighting</em></div>
       <div class="rows">
@@ -270,7 +272,7 @@ var wpURL=seed();
 var lastLayout=null;
 /* 默认值＝**拉伸态实测**：宽 76.1% 屏宽、中线 25.0% 屏高（src/ios-metrics.json）。
    wdth 40 对应实测单字宽高比 0.26 ≈ SF 常规 0.76 的三分之一。 */
-var S={mode:'stretched',wdth:40,wght:260,fsize:76.1,ypos:25.0,disp:70,edge:.34,frost:3,lift:1.12,tint:.14,
+var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,disp:70,edge:.34,frost:1,lift:1.06,tint:.05,
        bevw:9,surf:7,sexp:18,azi:235,elev:52,island:true,lunar:true,btns:true,dark:false,time:'11:49'};
 
 /* 位移图：改编自 shuding/liquid-glass（MIT）。
@@ -344,7 +346,11 @@ function layoutClock(){
   }
   if(!items.length) return null;
   var inkH=set.inkBottom-set.inkTop;
-  var scale=(S.fsize/100*SW)/adv;
+  /* **按字高定缩放，不按宽度。**
+     按宽度定的话，"11:49"（两个窄的 1）比 "16:55" 整串窄，
+     同样宽度下会被放得更高，于是压到上面的农历行 —— 出图才看见。
+     真机是按字号定的，和具体显示什么数字无关。 */
+  var scale=(S.fsize/100*SH)/inkH;
   var w=adv*scale, h=inkH*scale;
   var x0=(SW-w)/2;
   var yMid=S.ypos/100*SH;
@@ -516,7 +522,7 @@ $('tMode').addEventListener('click',function(){
   this.setAttribute('aria-pressed',String(st));
   this.textContent=st?'拉伸态时钟':'默认态时钟';
   var m=st?M.lockScreen.clockStretched:M.lockScreen.clock;
-  S.fsize=m.widthPctOfScreen; S.ypos=m.centerYPctOfScreen; S.wdth=st?40:85;
+  S.fsize=m.heightPctOfScreen; S.ypos=m.centerYPctOfScreen; S.wdth=st?40:85;
   $('fsize').value=S.fsize; $('oFsize').textContent=S.fsize.toFixed(1);
   $('ypos').value=S.ypos;   $('oYpos').textContent=S.ypos.toFixed(1);
   $('wdth').value=S.wdth;   $('oWdth').textContent=S.wdth;
