@@ -125,13 +125,11 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
                $() 永远只拿到第一个，开关就失灵。 -->
           <text id="dateL" x="660" y="340" font-size="44" font-weight="600" text-anchor="middle"
                 opacity=".95">9月20日周日 · 丙午年八月初十</text>
-          <g id="rbtns">
-            <circle cx="178" cy="2500" r="68" fill="#EBEBF0" fill-opacity=".26"/>
-            <circle cx="1142" cy="2500" r="68" fill="#EBEBF0" fill-opacity=".26"/>
-            <text x="178" y="2518" font-size="58" text-anchor="middle" fill="#fff">⌁</text>
-            <text x="1142" y="2518" font-size="58" text-anchor="middle" fill="#fff">◉</text>
-          </g>
-          <rect id="homeBar" x="420" y="2784" width="480" height="15" rx="8" opacity=".9"/>
+          <!-- 手电筒 / 相机 / home 指示条：**真机锁屏上没有，所以这里也不画。**
+               两张真机锁屏（reference/lock.png、lock2.png）实测：
+               按钮区亮像素 0、home 条区亮像素 0 —— 只有灵动岛、日期、时钟。
+               （正常使用中的锁屏应该是有的，我们拍到的可能是刚锁屏的状态；
+                 但没拍到就不画，免得又变成凭印象补东西。）-->
         </g>
 
         <!-- 主屏 -->
@@ -142,7 +140,9 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
                这里曾经另写了一份写死的，结果两份叠在一起 → Dock 重影。 -->
           <g id="appGrid"></g>
           <g id="dockRow"></g>
-          <rect x="420" y="2784" width="480" height="15" rx="8" fill="#fff" opacity=".9"/>
+          <!-- home 指示条：实测 x 138.3–301.3pt（宽 137，居中于 219.8）、距底 41.7pt。
+               我原先写的 160pt 宽偏了。锁屏上没有这条，只有主屏有。 -->
+          <rect x="454" y="2793" width="411" height="15" rx="8" fill="#fff" opacity=".9"/>
         </g>
       </svg>
     </div>
@@ -186,7 +186,6 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
       <div class="chips">
         <button class="chip" id="tIsland" aria-pressed="true" type="button">灵动岛</button>
         <button class="chip" id="tLunar" aria-pressed="true" type="button">农历</button>
-        <button class="chip" id="tBtns" aria-pressed="true" type="button">手电筒/相机</button>
         <button class="chip" id="tInk" aria-pressed="false" type="button">深色文字</button>
         <button class="chip" id="tMode" aria-pressed="true" type="button">拉伸态时钟</button>
       </div>
@@ -301,9 +300,7 @@ function apply(){
   $('carrier').setAttribute('fill',ink);
   $('carrier').textContent=S.time;               // 真机主屏左上角是时间，不是运营商
   $('dateL').setAttribute('fill',ink);
-  $('homeBar').setAttribute('fill',ink);
   $('island').style.display=S.island?'':'none';
-  $('rbtns').style.display=S.btns?'':'none';
   $('dateL').textContent=S.lunar?'9月20日 周日 · 丙午年八月初十':'9月20日 周日';
   $('dateL').setAttribute('font-family',"'PingFang SC',"+FONT);
   $('carrier').setAttribute('font-family',"'PingFang SC',"+FONT);
@@ -434,7 +431,7 @@ $('tMode').addEventListener('click',function(){
   apply();
 });
 
-[['tIsland','island'],['tLunar','lunar'],['tBtns','btns'],['tInk','dark']].forEach(function(t){
+[['tIsland','island'],['tLunar','lunar'],['tInk','dark']].forEach(function(t){
   var b=$(t[0]);
   b.addEventListener('click',function(){S[t[1]]=!S[t[1]];b.setAttribute('aria-pressed',String(S[t[1]]));apply()});
 });
