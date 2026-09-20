@@ -2,3 +2,4 @@ node_modules
 reference/*.png
 .DS_Store
 src/icons.js
+src/glyphs.js

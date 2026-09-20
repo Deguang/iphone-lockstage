@@ -91,8 +91,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
     <div class="phone">
       <svg id="scr" viewBox="0 0 1320 2868" preserveAspectRatio="xMidYMid slice">
         <defs>
-          <clipPath id="clipTxt"><text id="clipText" x="645" text-anchor="middle"
-            dominant-baseline="central">11:49</text></clipPath>
+          <clipPath id="clipTxt"><g id="clipGlyphs"></g></clipPath>
           <filter id="refract" x="-10%" y="-10%" width="120%" height="120%">
             <feImage id="dispImg" result="map" preserveAspectRatio="none"
                      x="0" y="0" width="1320" height="2868"/>
@@ -140,8 +139,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
             <rect id="tintRect" x="0" y="0" width="1320" height="2868" fill="#fff" opacity=".14"/>
           </g>
           <!-- 斜面高光 -->
-          <text id="bevText" x="645" text-anchor="middle" dominant-baseline="central"
-                fill="#000" filter="url(#bev)">11:49</text>
+          <g id="bevGlyphs" fill="#000" filter="url(#bev)"></g>
 
           <!-- 原生件。**全部来自 reference/*.png 实测**，单位 pt×3=px，见 src/ios-metrics.json -->
           <rect id="island" x="472" y="33" width="375" height="110" rx="55" fill="#000"/>
@@ -243,6 +241,11 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 <!-- 真实图标：src/icons.js 由 tools/extract-icons.mjs 从模拟器截图抠出。
      **是 Apple 的素材，gitignore 了，不随仓库分发。** 文件不存在就退回色块。 -->
 <script src="src/icons.js" onerror="void 0"></script>
+<!-- 时钟字形轮廓：src/glyphs.js 由 tools/glyph-paths 用 Core Text 从 SF 的
+     wdth 可变轴导出（拉伸态 wdth37 / 默认态 wdth85，实测对上真机 0.26 / 0.61）。
+     **浏览器驱动不了系统字体这条轴**（Chrome 实测 wdth 150→30 宽度完全不变），
+     所以不在浏览器里排字，直接画路径。轮廓源自 Apple 字体，gitignore 不进仓库。 -->
+<script src="src/glyphs.js" onerror="void 0"></script>
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
@@ -264,7 +267,7 @@ function seed(){
 }
 var wpURL=seed();
 
-var lastFontSize=600;
+var lastLayout=null;
 /* 默认值＝**拉伸态实测**：宽 76.1% 屏宽、中线 25.0% 屏高（src/ios-metrics.json）。
    wdth 40 对应实测单字宽高比 0.26 ≈ SF 常规 0.76 的三分之一。 */
 var S={mode:'stretched',wdth:40,wght:260,fsize:76.1,ypos:25.0,disp:70,edge:.34,frost:3,lift:1.12,tint:.14,
@@ -278,11 +281,19 @@ function displacementMap(){
   var W=220,H=Math.round(W*SH/SW);
   var c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
   x.fillStyle='#000';x.fillRect(0,0,W,H);
-  x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
-  // 字号跟 fitText 量出来的走，换算到这张小图上
-  var px=lastFontSize*(H/SH);
-  x.font=px+'px '+FONT;
-  x.fillText(S.time,W/2,S.ypos/100*H);
+  // 位移图必须用**同一套字形路径**画，否则折射形状和字形对不上
+  x.fillStyle='#fff';
+  var L=lastLayout;
+  if(L){
+    var k=W/SW;
+    L.items.forEach(function(it){
+      x.save();
+      x.translate((L.x0+it.x*L.scale)*k, L.y0*k);
+      x.scale(L.scale*k, L.scale*k);
+      try{ x.fill(new Path2D(it.d)); }catch(e){}
+      x.restore();
+    });
+  }
   var a=x.getImageData(0,0,W,H).data;
 
   var INF=1e6,d=new Float32Array(W*H),k;
@@ -310,34 +321,60 @@ function displacementMap(){
 }
 
 /**
- * 按**目标宽度**定字号，不按字高。
+ * 用**字形路径**排时钟，不用 <text>。
  *
- * 原来用「字高% → 字号」推，结果 11:49 横向溢出屏幕两边被切掉 ——
- * 因为 font-variation-settings 的 wdth 轴**不保证生效**（只有 Safari 和
- * macOS 上的 Chrome 能驱动系统字体这条轴），轴没生效字就变宽。
- * 量出来再缩放，轴生效与否都不会溢出。
+ * 原因：iOS 锁屏时钟走 SF 的 wdth 可变轴，而**浏览器驱动不了系统字体这条轴** ——
+ * Chrome 实测 wdth 150 / 100 / 70 / 50 / 40 / 30 全部返回同一个宽度，一点不变。
+ * 所以字形由 tools/glyph-paths 用 Core Text 离线导出成 SVG path（见 src/glyphs.js），
+ * 这里只负责按目标宽度缩放和摆位。任何浏览器都精确，也不必分发字体。
+ *
+ * 排版：按 advance 累加定位，整体缩放到「宽度占屏 fsize%」，中线落在 ypos%。
+ * @returns {{scale:number, items:Array, w:number, h:number}}
  */
-function fitText(el){
-  el.setAttribute('font-family',FONT);
-  el.setAttribute('font-variation-settings',"'wdth' "+S.wdth+", 'wght' "+S.wght+", 'opsz' 96");
-  el.setAttribute('y',(S.ypos/100*SH).toFixed(1));
-  el.textContent=S.time;
-  var probe=1000;
-  el.setAttribute('font-size',probe);
-  var w=0;
-  try{ w=el.getComputedTextLength(); }catch(e){}
-  if(!w) return probe*0.5;
-  var size=probe*(S.fsize/100*SW)/w;
-  el.setAttribute('font-size',size.toFixed(1));
-  return size;
+function layoutClock(){
+  var G=window.LS_GLYPHS;
+  if(!G) return null;
+  var set=G[S.mode==='stretched'?'stretched':'default'];
+  var chars=String(S.time).split(''), items=[], adv=0;
+  for(var i=0;i<chars.length;i++){
+    var g=set.glyphs[chars[i]];
+    if(!g) continue;
+    items.push({d:g.d,x:adv});
+    adv+=g.advance;
+  }
+  if(!items.length) return null;
+  var inkH=set.inkBottom-set.inkTop;
+  var scale=(S.fsize/100*SW)/adv;
+  var w=adv*scale, h=inkH*scale;
+  var x0=(SW-w)/2;
+  var yMid=S.ypos/100*SH;
+  // 路径原点在基线上；把墨迹中心对到 yMid
+  var y0=yMid-(set.inkTop+inkH/2)*scale;
+  return {scale:scale,items:items,w:w,h:h,x0:x0,y0:y0};
+}
+
+/** 把排好的字形塞进一个 <g>，作为裁剪路径或斜面源 */
+function paintGlyphs(host,L){
+  while(host.firstChild) host.removeChild(host.firstChild);
+  if(!L) return;
+  var NS='http://www.w3.org/2000/svg';
+  L.items.forEach(function(it){
+    var p=document.createElementNS(NS,'path');
+    p.setAttribute('d',it.d);
+    p.setAttribute('transform','translate('+(L.x0+it.x*L.scale).toFixed(1)+' '+L.y0.toFixed(1)+
+      ') scale('+L.scale.toFixed(5)+')');
+    host.appendChild(p);
+  });
 }
 
 function apply(){
   var ink=S.dark?'#3a3a3c':'#ffffff';
   $('wpImg').setAttribute('href',wpURL);
   $('wpGlass').setAttribute('href',wpURL);
-  var fs=fitText($('clipText')); fitText($('bevText'));
-  lastFontSize=fs;
+  var L=layoutClock();
+  paintGlyphs($('clipGlyphs'),L);
+  paintGlyphs($('bevGlyphs'),L);
+  lastLayout=L;
 
   $('dispImg').setAttribute('href',displacementMap());
   $('dispMap').setAttribute('scale',S.disp);
