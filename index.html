@@ -93,26 +93,6 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
     <div class="phone">
       <svg id="scr" viewBox="0 0 1320 2868" preserveAspectRatio="xMidYMid slice">
         <defs>
-          <clipPath id="clipTxt"><g id="clipGlyphs"></g></clipPath>
-          <filter id="refract" x="-10%" y="-10%" width="120%" height="120%">
-            <feImage id="dispImg" result="map" preserveAspectRatio="none"
-                     x="0" y="0" width="1320" height="2868"/>
-            <feDisplacementMap id="dispMap" in="SourceGraphic" in2="map" scale="70"
-                               xChannelSelector="R" yChannelSelector="G"/>
-            <feGaussianBlur id="fFrost" stdDeviation="3"/>
-            <feComponentTransfer id="fLift">
-              <feFuncR type="linear" slope="1.12"/><feFuncG type="linear" slope="1.12"/>
-              <feFuncB type="linear" slope="1.12"/>
-            </feComponentTransfer>
-          </filter>
-          <filter id="bev" x="-25%" y="-25%" width="150%" height="150%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="b" id="fBlur"/>
-            <feSpecularLighting in="b" surfaceScale="7" specularConstant="1" specularExponent="18"
-                                lighting-color="#fff" result="sp" id="fSpec">
-              <feDistantLight azimuth="235" elevation="52" id="fLight"/>
-            </feSpecularLighting>
-            <feComposite in="sp" in2="SourceAlpha" operator="in"/>
-          </filter>
         </defs>
 
         <!-- 壁纸 -->
@@ -134,17 +114,15 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
         </g>
         <!-- 锁屏 -->
         <g id="lockLayer">
-          <!-- 玻璃体：同一张壁纸，被字形裁出来 + 位移折射 -->
-          <g clip-path="url(#clipTxt)">
-            <image id="wpGlass" x="0" y="0" width="1320" height="2868"
-                   preserveAspectRatio="xMidYMid slice" filter="url(#refract)"/>
-            <rect id="tintRect" x="0" y="0" width="1320" height="2868" fill="#fff" opacity=".14"/>
-          </g>
-          <!-- 斜面高光 -->
-          <g id="bevGlyphs" fill="#000" filter="url(#bev)"></g>
-
-          <!-- 原生件。**全部来自 reference/*.png 实测**，单位 pt×3=px，见 src/ios-metrics.json -->
-          <rect id="island" x="472" y="33" width="375" height="110" rx="55" fill="#000"/>
+          <!-- 时钟：**纯白 + 60% 不透明度**，没有别的。
+               实测 reference/lock2.png 397 个采样点：α=0.601±0.072、中位 0.619，
+               背景从 (84,58,49) 变到 (72,52,30) 时笔画内跟着变、**比例恒定**
+               —— 说明就是平涂半透明，不是折射玻璃。
+               此前做的 SDF 位移折射 + feSpecularLighting 斜面高光全是过度设计，已删。 -->
+          <g id="clockGlyphs" fill="var(--clock-ink, #fff)" fill-opacity="0.60"></g>
+          <!-- 原生件，单位 pt×3=px，见 src/ios-metrics.json。
+               灵动岛在共用的 statusBar 组里 —— 这里再画一个会造成**重复 id**，
+               $() 永远只拿到第一个，开关就失灵。 -->
           <text id="dateL" x="660" y="340" font-size="44" font-weight="600" text-anchor="middle"
                 opacity=".95">9月20日周日 · 丙午年八月初十</text>
           <g id="rbtns">
@@ -178,7 +156,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
     <section class="panel">
       <div class="phead"><h2>时钟字形</h2><em>SFNS.ttf 可变轴</em></div>
       <div class="rows">
-        <div class="row"><label for="cTime">时间</label><input type="text" id="cTime" value="11:49"><output></output></div>
+        <div class="row"><label for="cTime">时间</label><input type="text" id="cTime"><output></output></div>
         <div class="row"><label for="wdth">宽度 <b>wdth</b></label>
           <input type="range" id="wdth" min="30" max="150" step="1" value="45"><output id="oWdth">45</output></div>
         <div class="row"><label for="wght">字重 <b>wght</b></label>
@@ -193,32 +171,14 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
     </section>
 
     <section class="panel">
-      <div class="phead"><h2>玻璃</h2><em>字形 SDF → feDisplacementMap</em></div>
+      <div class="phead"><h2>时钟</h2><em>实测 α=0.60</em></div>
       <div class="rows">
-        <div class="row"><label for="disp">折射 <b>scale</b></label>
-          <input type="range" id="disp" min="0" max="200" step="2" value="70"><output id="oDisp">70</output></div>
-        <div class="row"><label for="edge">边缘集中</label>
-          <input type="range" id="edge" min="0.05" max="1" step="0.01" value="0.34"><output id="oEdge">0.34</output></div>
-        <div class="row"><label for="frost">磨砂 <b>blur</b></label>
-          <input type="range" id="frost" min="0" max="20" step="0.5" value="1"><output id="oFrost">1</output></div>
-        <div class="row"><label for="lift">提亮</label>
-          <input type="range" id="lift" min="0.6" max="1.8" step="0.01" value="1.06"><output id="oLift">1.06</output></div>
-        <div class="row"><label for="tint">染色</label>
-          <input type="range" id="tint" min="0" max="0.6" step="0.01" value="0.05"><output id="oTint">0.05</output></div>
+        <div class="row"><label for="alpha">不透明度</label>
+          <input type="range" id="alpha" min="0.1" max="1" step="0.01" value="0.60"><output id="oAlpha">0.60</output></div>
       </div>
-      <div class="phead" style="border-top:1px solid var(--line)"><h2>斜面高光</h2><em>feSpecularLighting</em></div>
-      <div class="rows">
-        <div class="row"><label for="bevw">斜面宽</label>
-          <input type="range" id="bevw" min="1" max="40" step="0.5" value="9"><output id="oBevw">9</output></div>
-        <div class="row"><label for="surf">起伏</label>
-          <input type="range" id="surf" min="0" max="20" step="0.5" value="7"><output id="oSurf">7</output></div>
-        <div class="row"><label for="sexp">聚光</label>
-          <input type="range" id="sexp" min="1" max="60" step="1" value="18"><output id="oSexp">18</output></div>
-        <div class="row"><label for="azi">光向</label>
-          <input type="range" id="azi" min="0" max="360" step="5" value="235"><output id="oAzi">235</output></div>
-        <div class="row"><label for="elev">仰角</label>
-          <input type="range" id="elev" min="5" max="85" step="1" value="52"><output id="oElev">52</output></div>
-      </div>
+      <p class="note">真机实测 397 个采样点：<b>α=0.601±0.072，中位 0.619</b>。
+        背景变化时笔画内按同比例跟着变 —— 就是平涂半透明，**不是折射玻璃**。
+        此前做的 SDF 位移折射和斜面高光已删。</p>
     </section>
 
     <section class="panel">
@@ -251,9 +211,12 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
+/** 默认当前时间 —— 预演壁纸看的就是「现在长什么样」 */
+function nowHHMM(){var d=new Date();
+  return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 /* 实测常量。来源 src/ios-metrics.json —— 全部由 tools/measure-ios.mjs
    从 iOS 26.2 模拟器截图量出，可复现。别在这里手改数字。 */
-var M={"statusBar": {"_measured": "reference/home.png，逐个图元单独取包围盒（不是整条带）", "inkTop": 25, "inkBottom": 39.0, "time": {"x0": 60.7, "x1": 106.3, "w": 46.0, "inkTop": 26.0, "inkHeight": 13.3, "fontSize": 18.5, "_fontNote": "**字号 ≠ 墨迹高**。数字的 cap height ≈ 0.72×字号，所以 13.3÷0.72≈18.5pt。\n我一度直接把墨迹高 14.3 当字号写进去，时间小了 1.3 倍 —— 这是「不精致」的主因之一。"}, "signal": {"count": 4, "dotW": 3.7, "dotH": 3.7, "pitch": 6.0, "x0": 312.3, "bottom": 38.7, "_shapeNote": "**是四个等大的圆点，不是递增高度的信号条。**我按老 iOS 的印象画成了递增条。"}, "wifi": {"x0": 341.7, "x1": 360.3, "w": 19.0, "h": 14.0, "top": 25.0, "bottom": 38.7}, "battery": {"x0": 368.3, "x1": 398.3, "w": 30.3, "h": 14.3, "top": 25.0, "bottom": 39.0}}, "homeScreen": {"icon": {"_measured": "从 reference/home.png 的「日历」图标（x105–308, y934–1137）逐行取左上角轮廓，再拟合", "size": 68, "cornerRadiusRatio": 0.25, "cornerExponent": 2.0, "_shapeNote": "**实测是普通圆角矩形（n=2.0），半径＝边长的 25%，残差 0.00018。**\n广为流传的「Apple squircle，超椭圆 n≈5、r=22.37%」对 iOS 26 不成立 —— \n验算：y=12.5% 处圆角矩形给 x=3.35%、实测 3.5%，而 n=5 的超椭圆给 0.16%，差一个数量级。\n我原先抄的就是那个 22.37%，当时标了「未实测」，现在实测推翻了它。"}, "grid": {"columns": 4, "columnPitch": 100.7, "rowPitch": 108.7, "marginLeft": 35, "marginRight": 35, "firstIconRowTop": 311.3}, "label": {"_measured": "标签条带 y 1158–1190px", "inkHeight": 11, "gapBelowIcon": 6.7}, "widget2x2": {"_measured": "组件条带 y 282–811px", "top": 94, "height": 176.7, "left": 31, "right": 408.7, "labelTop": 277.3, "labelHeight": 11}, "searchPill": {"_measured": "胶囊条带 y 2291–2380px", "top": 763.7, "height": 30, "left": 189.3, "width": 61}, "dock": {"_measured": "Dock 条带 y 2465–2816px", "top": 821.7, "height": 117.3, "left": 17, "width": 406}}, "lockScreen": {"clock": {"inkTopPt": 110.0, "inkBottomPt": 226.3, "inkHeightPt": 116.7, "inkLeftPt": 66.0, "inkRightPt": 421.7, "inkWidthPt": 356.0, "widthPctOfScreen": 80.9, "heightPctOfScreen": 12.2, "centerYPctOfScreen": 17.6, "stringAspect": 3.05, "digitAspect": 0.61, "_digitAspectNote": "单个数字 宽÷墨迹高。SF 常规宽度约 0.76，所以 iOS 把字压到了**八成左右**，不是极窄。我一度按参考图估成 1.43 并去找最窄的字体（DIN Condensed 2.21、wdth 30），方向整个错了。", "_glyphWidthsPt": [71.7, 70.7, 19.3, 74.7, 41.3], "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"}, "clockStretched": {"_measured": "reference/lock2.png。壁纸是高饱和紫红，时钟是低饱和浅色 —— 用「亮度>0.62 且饱和<0.22」分离，比「原图−模糊」干净得多。", "inkWidthPt": 335.0, "inkHeightPt": 251.3, "inkLeftPt": 49.0, "inkRightPt": 383.7, "inkTopPt": 113.3, "inkBottomPt": 364.3, "widthPctOfScreen": 76.1, "heightPctOfScreen": 26.3, "centerYPctOfScreen": 25.0, "stringAspect": 1.33, "digitAspect": 0.26, "_glyphWidthsPt": [43.3, 69.0, 63.3], "_note": "「1」43.3pt 比其它数字窄（约 65pt）。单字 0.26 ≈ SF 常规 0.76 的三分之一，对应 wdth 轴压到 30–40 一带。"}, "date": {"_measured": "reference/lock2.png，同上按饱和度分离", "inkTopPt": 98.0, "inkHeightPt": 12.0, "inkLeftPt": 78.3, "inkRightPt": 361.0, "_content": "「9月20日周日 · 丙午年八月初十」——**农历是 iOS 原生就带的**。", "_supersedes": "早先从 lock.png 量到的 顶86/高19 混进了壁纸边缘，以这组为准。"}}};
+var M={"screen":{"pt": {"w": 440, "h": 956}, "px": {"w": 1320, "h": 2868}, "scale": 3},"statusBar": {"_measured": "reference/home.png，逐个图元单独取包围盒（不是整条带）", "inkTop": 25, "inkBottom": 39.0, "time": {"x0": 60.7, "x1": 106.3, "w": 46.0, "inkTop": 26.0, "inkHeight": 13.3, "fontSize": 18.5, "_fontNote": "**字号 ≠ 墨迹高**。数字的 cap height ≈ 0.72×字号，所以 13.3÷0.72≈18.5pt。\n我一度直接把墨迹高 14.3 当字号写进去，时间小了 1.3 倍 —— 这是「不精致」的主因之一。"}, "signal": {"count": 4, "dotW": 3.7, "dotH": 3.7, "pitch": 6.0, "x0": 312.3, "bottom": 38.7, "_shapeNote": "**是四个等大的圆点，不是递增高度的信号条。**我按老 iOS 的印象画成了递增条。"}, "wifi": {"x0": 341.7, "x1": 360.3, "w": 19.0, "h": 14.0, "top": 25.0, "bottom": 38.7}, "battery": {"x0": 368.3, "x1": 398.3, "w": 30.3, "h": 14.3, "top": 25.0, "bottom": 39.0}}, "homeScreen": {"icon": {"_measured": "从 reference/home.png 的「日历」图标（x105–308, y934–1137）逐行取左上角轮廓，再拟合", "size": 68, "cornerRadiusRatio": 0.25, "cornerExponent": 2.0, "_shapeNote": "**实测是普通圆角矩形（n=2.0），半径＝边长的 25%，残差 0.00018。**\n广为流传的「Apple squircle，超椭圆 n≈5、r=22.37%」对 iOS 26 不成立 —— \n验算：y=12.5% 处圆角矩形给 x=3.35%、实测 3.5%，而 n=5 的超椭圆给 0.16%，差一个数量级。\n我原先抄的就是那个 22.37%，当时标了「未实测」，现在实测推翻了它。"}, "grid": {"columns": 4, "columnPitch": 100.7, "rowPitch": 108.7, "marginLeft": 35, "marginRight": 35, "firstIconRowTop": 311.3}, "label": {"_measured": "标签条带 y 1158–1190px", "inkHeight": 11, "gapBelowIcon": 6.7}, "widget2x2": {"_measured": "组件条带 y 282–811px", "top": 94, "height": 176.7, "left": 31, "right": 408.7, "labelTop": 277.3, "labelHeight": 11}, "searchPill": {"_measured": "胶囊条带 y 2291–2380px", "top": 763.7, "height": 30, "left": 189.3, "width": 61}, "dock": {"_measured": "Dock 条带 y 2465–2816px", "top": 821.7, "height": 117.3, "left": 17, "width": 406}}, "lockScreen": {"clock": {"inkTopPt": 110.0, "inkBottomPt": 226.3, "inkHeightPt": 116.7, "inkLeftPt": 66.0, "inkRightPt": 421.7, "inkWidthPt": 356.0, "widthPctOfScreen": 80.9, "heightPctOfScreen": 12.2, "centerYPctOfScreen": 17.6, "stringAspect": 3.05, "digitAspect": 0.61, "_digitAspectNote": "单个数字 宽÷墨迹高。SF 常规宽度约 0.76，所以 iOS 把字压到了**八成左右**，不是极窄。我一度按参考图估成 1.43 并去找最窄的字体（DIN Condensed 2.21、wdth 30），方向整个错了。", "_glyphWidthsPt": [71.7, 70.7, 19.3, 74.7, 41.3], "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"}, "clockStretched": {"_measured": "reference/lock2.png。壁纸是高饱和紫红，时钟是低饱和浅色 —— 用「亮度>0.62 且饱和<0.22」分离，比「原图−模糊」干净得多。", "inkWidthPt": 335.0, "inkHeightPt": 251.3, "inkLeftPt": 49.0, "inkRightPt": 383.7, "inkTopPt": 113.3, "inkBottomPt": 364.3, "widthPctOfScreen": 76.1, "heightPctOfScreen": 26.3, "centerYPctOfScreen": 25.0, "stringAspect": 1.33, "digitAspect": 0.26, "_glyphWidthsPt": [43.3, 69.0, 63.3], "_note": "「1」43.3pt 比其它数字窄（约 65pt）。单字 0.26 ≈ SF 常规 0.76 的三分之一，对应 wdth 轴压到 30–40 一带。"}, "date": {"_measured": "reference/lock2.png，同上按饱和度分离", "inkTopPt": 98.0, "inkHeightPt": 12.0, "inkLeftPt": 78.3, "inkRightPt": 361.0, "_content": "「9月20日周日 · 丙午年八月初十」——**农历是 iOS 原生就带的**。", "_supersedes": "早先从 lock.png 量到的 顶86/高19 混进了壁纸边缘，以这组为准。"}}};
 var SW=1320, SH=2868, FONT='-apple-system, system-ui, sans-serif';
 
 function seed(){
@@ -272,55 +235,7 @@ var wpURL=seed();
 var lastLayout=null;
 /* 默认值＝**拉伸态实测**：宽 76.1% 屏宽、中线 25.0% 屏高（src/ios-metrics.json）。
    wdth 40 对应实测单字宽高比 0.26 ≈ SF 常规 0.76 的三分之一。 */
-var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,disp:70,edge:.34,frost:1,lift:1.06,tint:.05,
-       bevw:9,surf:7,sexp:18,azi:235,elev:52,island:true,lunar:true,btns:true,dark:false,time:'11:49'};
-
-/* 位移图：改编自 shuding/liquid-glass（MIT）。
-   原作对圆角矩形求 SDF；这里换成**字形**的 SDF —— canvas 画字取 alpha，
-   两趟倒角距离变换得到「离边缘多远」，再把梯度编码进 R/G。
-   玻璃的折射就是这么来的：靠边缘位移大，中间几乎不动。 */
-function displacementMap(){
-  var W=220,H=Math.round(W*SH/SW);
-  var c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d');
-  x.fillStyle='#000';x.fillRect(0,0,W,H);
-  // 位移图必须用**同一套字形路径**画，否则折射形状和字形对不上
-  x.fillStyle='#fff';
-  var L=lastLayout;
-  if(L){
-    var k=W/SW;
-    L.items.forEach(function(it){
-      x.save();
-      x.translate((L.x0+it.x*L.scale)*k, L.y0*k);
-      x.scale(L.scale*k, L.scale*k);
-      try{ x.fill(new Path2D(it.d)); }catch(e){}
-      x.restore();
-    });
-  }
-  var a=x.getImageData(0,0,W,H).data;
-
-  var INF=1e6,d=new Float32Array(W*H),k;
-  for(var i=0;i<W*H;i++)d[i]=a[i*4]>127?INF:0;
-  for(var y=0;y<H;y++)for(var xx=0;xx<W;xx++){k=y*W+xx;if(!d[k])continue;var m=d[k];
-    if(xx>0)m=Math.min(m,d[k-1]+1); if(y>0)m=Math.min(m,d[k-W]+1);
-    if(xx>0&&y>0)m=Math.min(m,d[k-W-1]+1.4142);
-    if(xx<W-1&&y>0)m=Math.min(m,d[k-W+1]+1.4142); d[k]=m;}
-  for(var y2=H-1;y2>=0;y2--)for(var x2=W-1;x2>=0;x2--){k=y2*W+x2;if(!d[k])continue;var m2=d[k];
-    if(x2<W-1)m2=Math.min(m2,d[k+1]+1); if(y2<H-1)m2=Math.min(m2,d[k+W]+1);
-    if(x2<W-1&&y2<H-1)m2=Math.min(m2,d[k+W+1]+1.4142);
-    if(x2>0&&y2<H-1)m2=Math.min(m2,d[k+W-1]+1.4142); d[k]=m2;}
-
-  var R=Math.max(2,S.edge*px*0.5), h=new Float32Array(W*H);
-  for(var j=0;j<W*H;j++){var t=Math.min(1,d[j]/R);h[j]=t*t*(3-2*t);}
-
-  var img=x.createImageData(W,H),o=img.data;
-  var at=function(X,Y){return h[Math.max(0,Math.min(H-1,Y))*W+Math.max(0,Math.min(W-1,X))]};
-  for(var y3=0;y3<H;y3++)for(var x3=0;x3<W;x3++){var q=y3*W+x3;
-    o[q*4]=Math.max(0,Math.min(255,128+(at(x3+1,y3)-at(x3-1,y3))*127*5));
-    o[q*4+1]=Math.max(0,Math.min(255,128+(at(x3,y3+1)-at(x3,y3-1))*127*5));
-    o[q*4+2]=128;o[q*4+3]=255;}
-  x.putImageData(img,0,0);
-  return c.toDataURL();
-}
+var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,time:nowHHMM()};
 
 /**
  * 用**字形路径**排时钟，不用 <text>。
@@ -376,25 +291,11 @@ function paintGlyphs(host,L){
 function apply(){
   var ink=S.dark?'#3a3a3c':'#ffffff';
   $('wpImg').setAttribute('href',wpURL);
-  $('wpGlass').setAttribute('href',wpURL);
   var L=layoutClock();
-  paintGlyphs($('clipGlyphs'),L);
-  paintGlyphs($('bevGlyphs'),L);
+  paintGlyphs($('clockGlyphs'),L);
+  $('clockGlyphs').setAttribute('fill-opacity',S.alpha);
+  $('clockGlyphs').style.setProperty('--clock-ink',S.dark?'#000':'#fff');
   lastLayout=L;
-
-  $('dispImg').setAttribute('href',displacementMap());
-  $('dispMap').setAttribute('scale',S.disp);
-  $('fFrost').setAttribute('stdDeviation',S.frost);
-  var ft=$('fLift').children;
-  for(var i=0;i<ft.length;i++)ft[i].setAttribute('slope',S.lift);
-  $('tintRect').setAttribute('fill',S.dark?'#000':'#fff');
-  $('tintRect').setAttribute('opacity',S.tint);
-
-  $('fBlur').setAttribute('stdDeviation',S.bevw);
-  $('fSpec').setAttribute('surfaceScale',S.surf);
-  $('fSpec').setAttribute('specularExponent',S.sexp);
-  $('fLight').setAttribute('azimuth',S.azi);
-  $('fLight').setAttribute('elevation',S.elev);
 
   $('statusBar').setAttribute('color',ink);      // 图元用 currentColor
   $('carrier').setAttribute('fill',ink);
@@ -426,41 +327,37 @@ function apply(){
   var mk=function(t,a,parent){var e=document.createElementNS(NS,t);
     for(var k in a)e.setAttribute(k,a[k]); if(parent)parent.appendChild(e); return e};
 
-  /* --- 状态栏右侧：**逐个图元实测**，不是按印象画 ---
-     信号是四个等大 3.7×3.7pt 的圆点贴底（不是递增高度的条，那是老 iOS 的样子）
-     Wi-Fi 19×14pt · 电池 30.3×14.3pt · 时间字号 18.5pt（≠ 墨迹高 13.3） */
-  var bars=$('bars'), sg=SB.signal;
-  for(var i=0;i<sg.count;i++)
-    mk('rect',{x:(sg.x0+i*sg.pitch)*G, y:(sg.bottom-sg.dotH)*G,
-      width:sg.dotW*G, height:sg.dotH*G, rx:sg.dotW*G*0.3}, bars);
-
-  // Wi-Fi：三段同心弧 + 圆点，整体压进实测的 19×14pt
-  var wf=SB.wifi, wcx=(wf.x0+wf.x1)/2*G, wbot=wf.bottom*G, arc='';
-  [1.0,0.62,0.26].forEach(function(k){
-    var r=wf.w/2*k*G, dy=r*0.42;
-    arc+='M'+(wcx-r)+' '+(wbot-dy)+' A'+r+' '+r+' 0 0 1 '+(wcx+r)+' '+(wbot-dy)+' ';
-  });
-  $('wifi').setAttribute('d',arc);
-  $('wifi').setAttribute('stroke','currentColor');
-  $('wifi').setAttribute('stroke-width', wf.h*G*0.155);
-  mk('circle',{cx:wcx,cy:wbot-wf.h*G*0.06,r:wf.h*G*0.1,fill:'currentColor'},$('sigR'));
-
-  // 电池：外框 + 内芯 + 正极点，尺寸用实测
-  var bt=SB.battery, bx=bt.x0*G, by=bt.top*G, bw=bt.w*G, bh=bt.h*G, batt=$('batt');
-  var capW=bh*0.17, bodyW=bw-capW-bh*0.09;
-  mk('rect',{x:bx,y:by,width:bodyW,height:bh,rx:bh*0.32,fill:'none',
-    stroke:'currentColor','stroke-opacity':'.38','stroke-width':bh*0.1},batt);
-  mk('rect',{x:bx+bh*0.16,y:by+bh*0.16,width:bodyW-bh*0.32,height:bh-bh*0.32,
-    rx:bh*0.2,fill:'currentColor'},batt);
-  mk('path',{d:'M'+(bx+bodyW+bh*0.11)+' '+(by+bh*0.33)+'v'+(bh*0.34),
-    stroke:'currentColor','stroke-opacity':'.38','stroke-width':capW,'stroke-linecap':'round'},batt);
+  /* --- 状态栏右侧：**优先用从真机抠出的图元**（白色 + 灰度当 alpha）。
+     手画过两轮都错（信号画成递增高度的条、Wi-Fi 三段弧凭感觉），
+     所以改成抠图；抠不到才退回手画。位置用逐图元实测值。 --- */
+  var IC=window.LS_ICONS||null;
+  var SBI=IC&&IC.statusBar;
+  if(SBI&&SBI.signal&&SBI.wifi&&SBI.battery){
+    ['signal','wifi','battery'].forEach(function(k){
+      var it=SBI[k];
+      mk('image',{href:it.uri,x:it.xPt*G,y:it.yPt*G,width:it.wPt*G,height:it.hPt*G},$('sigR'));
+    });
+  } else {
+    var bars=$('bars'), sg=SB.signal;
+    for(var i=0;i<sg.count;i++)
+      mk('rect',{x:(sg.x0+i*sg.pitch)*G,y:(sg.bottom-sg.dotH)*G,
+        width:sg.dotW*G,height:sg.dotH*G,rx:sg.dotW*G*0.3},bars);
+    var wf=SB.wifi, wcx=(wf.x0+wf.x1)/2*G, wbot=wf.bottom*G, arc='';
+    [1.0,0.62,0.26].forEach(function(kk){var r=wf.w/2*kk*G;
+      arc+='M'+(wcx-r)+' '+(wbot-r*0.42)+' A'+r+' '+r+' 0 0 1 '+(wcx+r)+' '+(wbot-r*0.42)+' ';});
+    $('wifi').setAttribute('d',arc);
+    $('wifi').setAttribute('stroke','currentColor');
+    $('wifi').setAttribute('stroke-width',wf.h*G*0.155);
+    var bt=SB.battery, bx=bt.x0*G, by=bt.top*G, bw=bt.w*G, bh=bt.h*G;
+    mk('rect',{x:bx,y:by,width:bw-bh*0.26,height:bh,rx:bh*0.32,fill:'none',
+      stroke:'currentColor','stroke-opacity':'.38','stroke-width':bh*0.1},$('batt'));
+  }
 
   /* --- 主屏：优先用从真机截图抠出的**真实图标**（src/icons.json），
          抠不到才退回色块。素材是 Apple 的，只在本地用、不进仓库，
          见 tools/extract-icons.mjs。 --- */
   var g=$('appGrid'), sz=H.icon.size*G, rx=sz*H.icon.cornerRadiusRatio;
   var colX=function(c){return (H.grid.marginLeft+c*H.grid.columnPitch)*G};
-  var IC=window.LS_ICONS||null;
   var names=['日历','照片','提醒事项','News','地图','健康','钱包','设置'];
 
   var wNames=['地图','日历'];
@@ -495,23 +392,31 @@ function apply(){
   mk('text',{x:(H.searchPill.left+H.searchPill.width/2)*G,
     y:(H.searchPill.top+H.searchPill.height*0.72)*G,'font-size':H.searchPill.height*G*0.5,
     'text-anchor':'middle',fill:'#fff','font-family':"'PingFang SC',"+FONT},dk).textContent='搜索';
-  mk('rect',{x:H.dock.left*G,y:H.dock.top*G,width:H.dock.width*G,height:H.dock.height*G,
+  /* Dock 宽度**跟图标数量走**，不是写死 406pt。
+     真机那张只有 Safari 和信息两个图标，Dock 就是窄的；满 4 个才撑到实测的 406pt。
+     以「图标边长 + 列距间隙」为一格，两端各留一份内边距（由实测的 406pt 反推）。 */
+  var dn=(IC&&IC.dock&&IC.dock.length)||4;
+  var pitch=H.grid.columnPitch;
+  var pad=(H.dock.width-(4*H.icon.size+3*(pitch-H.icon.size)))/2;
+  var dockW=dn*H.icon.size+(dn-1)*(pitch-H.icon.size)+2*pad;
+  var dockL=(M.screen.pt.w-dockW)/2;
+  mk('rect',{x:dockL*G,y:H.dock.top*G,width:dockW*G,height:H.dock.height*G,
     rx:H.dock.height*G*0.38,fill:'#fff','fill-opacity':'.16'},dk);
   var dy=(H.dock.top+(H.dock.height-H.icon.size)/2)*G;
-  if(IC&&IC.dock&&IC.dock.length)
-    IC.dock.forEach(function(d){mk('image',{href:d.uri,x:d.x,y:dy,width:sz,height:sz},dk)});
-  else for(var j=0;j<4;j++)
-    mk('rect',{x:colX(j),y:dy,width:sz,height:sz,rx:rx,fill:'hsl('+(j*70+20)+' 72% 55%)'},dk);
+  for(var j=0;j<dn;j++){
+    var dx=(dockL+pad+j*pitch)*G;
+    if(IC&&IC.dock&&IC.dock[j]) mk('image',{href:IC.dock[j].uri,x:dx,y:dy,width:sz,height:sz},dk);
+    else mk('rect',{x:dx,y:dy,width:sz,height:sz,rx:rx,fill:'hsl('+(j*70+20)+' 72% 55%)'},dk);
+  }
 })();
 
 [['wdth','oWdth',0],['wght','oWght',0],['fsize','oFsize',1],['ypos','oYpos',1],
- ['disp','oDisp',0],['edge','oEdge',2],['frost','oFrost',1],['lift','oLift',2],['tint','oTint',2],
- ['bevw','oBevw',1],['surf','oSurf',1],['sexp','oSexp',0],['azi','oAzi',0],['elev','oElev',0]
-].forEach(function(s){
+ ['alpha','oAlpha',2]].forEach(function(s){
   var inp=$(s[0]),out=$(s[1]);
   inp.addEventListener('input',function(){S[s[0]]=parseFloat(inp.value);out.textContent=S[s[0]].toFixed(s[2]);apply()});
 });
-$('cTime').addEventListener('input',function(){S.time=this.value||'11:49';apply()});
+$('cTime').value=S.time;
+$('cTime').addEventListener('input',function(){S.time=this.value||nowHHMM();apply()});
 
 /* 两态切换。iOS 26 锁屏时钟有默认态和可拖拽的拉伸态，参数差很多：
    默认 高12.2% 中线17.6% 单字0.61 ｜ 拉伸 高26.3% 中线25.0% 单字0.26

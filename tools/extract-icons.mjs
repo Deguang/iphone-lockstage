@@ -66,7 +66,7 @@ const size = px(H.icon.size);
 const colX = (c) => px(H.grid.marginLeft + c * H.grid.columnPitch);
 const rowY = (r) => px(H.grid.firstIconRowTop + r * H.grid.rowPitch);
 
-const out = { _source: path.basename(file), _widgetSource: path.basename(widgetFile), _captured: M._captured, icons: [], widgets: [], dock: [] };
+const out = { _source: path.basename(file), _widgetSource: path.basename(widgetFile), _captured: M._captured, icons: [], widgets: [], dock: [], statusBar: {} };
 
 // 图标：按实测网格逐格裁。空格子（纯黑）跳过
 for (let r = 0; r < 2; r++) {
@@ -119,8 +119,36 @@ for (let r = 0; r < 2; r++) {
 /* 输出 .js 而不是 .json：index.html 直接双击用 file:// 打开时，
    XMLHttpRequest 取同目录 json 会被 CORS 挡（Chrome 下必然），
    而 <script src> 不受这个限制。 */
+/* 状态栏图元：信号 / Wi-Fi / 电池。
+   **抠成「白色 + 灰度当 alpha」**，不是直接裁一块 —— 直接裁会把黑底一起带上，
+   叠到别的壁纸上就是一块黑方块。
+   这几个图元我手画过两轮，每轮都错（信号画成递增高度的条、Wi-Fi 三段弧凭感觉），
+   所以改成从真机抠。位置用逐图元实测值（见 ios-metrics.json statusBar）。 */
+{
+  const SB = M.statusBar;
+  const pad = 2;   // 留一点边，别把抗锯齿边缘切掉
+  for (const [name, g] of [['signal', { x0: SB.signal.x0, x1: SB.signal.x0 + 3 * SB.signal.pitch + SB.signal.dotW }],
+                           ['wifi', { x0: SB.wifi.x0, x1: SB.wifi.x1 }],
+                           ['battery', { x0: SB.battery.x0, x1: SB.battery.x1 }]]) {
+    const x = px(g.x0) - pad, w = px(g.x1 - g.x0) + pad * 2;
+    const y = px(SB.inkTop) - pad, h = px(SB.inkBottom - SB.inkTop) + pad * 2;
+    const grey = await sharp(file).extract({ left: x, top: y, width: w, height: h })
+      .greyscale().raw().toBuffer();
+    // 白色像素 + 灰度当 alpha
+    const rgba = Buffer.alloc(w * h * 4);
+    for (let i = 0; i < w * h; i++) {
+      rgba[i * 4] = 255; rgba[i * 4 + 1] = 255; rgba[i * 4 + 2] = 255;
+      rgba[i * 4 + 3] = grey[i];
+    }
+    const buf = await sharp(rgba, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
+    out.statusBar[name] = { xPt: g.x0 - pad / G, yPt: SB.inkTop - pad / G,
+                            wPt: (g.x1 - g.x0) + 2 * pad / G, hPt: (SB.inkBottom - SB.inkTop) + 2 * pad / G,
+                            uri: 'data:image/png;base64,' + buf.toString('base64') };
+  }
+}
+
 const dest = new URL('../src/icons.js', import.meta.url);
 fs.writeFileSync(dest, 'window.LS_ICONS=' + JSON.stringify(out) + ';');
 const kb = (fs.statSync(dest).size / 1024).toFixed(0);
-console.log(`图标 ${out.icons.length} 个 · 组件 ${out.widgets.length} 个 · Dock ${out.dock.length} 个 → src/icons.js (${kb} KB)`);
+console.log(`图标 ${out.icons.length} 个 · 组件 ${out.widgets.length} 个 · Dock ${out.dock.length} 个 · 状态栏 ${Object.keys(out.statusBar).length} 个 → src/icons.js (${kb} KB)`);
 console.log('⚠️ 这是 Apple 的图标素材，已在 .gitignore 里，不要提交。');
