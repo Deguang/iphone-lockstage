@@ -9,5 +9,11 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.4"
+  }
 }
