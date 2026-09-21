@@ -558,7 +558,7 @@ function buildHome(){
      ⚠️ mk() 是 `for(k in a) setAttribute(k,a[k])`，传 null 会写成字符串 "null"，
         所以 filter 这个键要**条件加**，不能给 null。 */
   /* 三档不透明度集中在这儿，要调浓淡改这一处就够 */
-  var SLAB={icon:0.13, dockTile:0.15, dockBar:0.10, brightMul:1.75};
+  var SLAB={icon:0.30, dockTile:0.32, dockBar:0.20, brightMul:1.55};
   function slab(x,y,w,h,r,op,parent,brightBg){
     var a={x:x,y:y,width:w,height:h,rx:r,fill:'#fff',
            'fill-opacity':(brightBg?op*SLAB.brightMul:op).toFixed(3)};
