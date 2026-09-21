@@ -125,6 +125,12 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
         <defs>
           <!-- 图标标签的投影。实测 iOS 就是这么做的（白字 + 暗晕），
                所以标签不需要跟着壁纸换色。 -->
+          <!-- 占位块的投影。白色半透明压在**浅色**壁纸上会消失，
+               靠一层柔和暗晕把边缘定出来 —— 和 iOS 给图标标签加阴影是同一个思路。
+               比 labSh 更散更淡：那个是给文字的，用在色块上会显脏。 -->
+          <filter id="slabSh" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.22"/>
+          </filter>
           <filter id="labSh" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="1.6" stdDeviation="3.2" flood-color="#000" flood-opacity="0.55"/>
           </filter>
@@ -545,9 +551,17 @@ function buildHome(){
      所以图标区和 Dock **各取一次样**：同一张壁纸上下两端的明暗可能是相反的。 */
   var gridDark = autoInk({topPt:H.widget2x2.top, hPt:H.grid.rowPitch*3});
   var dockDark = autoInk({topPt:H.dock.top, hPt:H.dock.height});
-  function slab(x,y,w,h,r,op,parent,dark){
-    mk('rect',{x:x,y:y,width:w,height:h,rx:r,
-      fill:dark?'#000':'#fff','fill-opacity':dark?(op*0.78).toFixed(3):String(op)},parent);
+  /* **一律白色半透明**，不切黑。压在浅色壁纸上靠两件事保住可见：
+       · 加厚 —— 亮壁纸上提不透明度（实测纯白 .20 在浅沙上等于没有）
+       · 投影 —— 一层柔和暗晕定出边缘，同 iOS 给图标标签加阴影的思路
+     参数 brightBg 的含义是「壁纸亮不亮」，不再是「用不用黑色」。
+     ⚠️ mk() 是 `for(k in a) setAttribute(k,a[k])`，传 null 会写成字符串 "null"，
+        所以 filter 这个键要**条件加**，不能给 null。 */
+  function slab(x,y,w,h,r,op,parent,brightBg){
+    var a={x:x,y:y,width:w,height:h,rx:r,fill:'#fff',
+           'fill-opacity':(brightBg?op*1.75:op).toFixed(3)};
+    if(brightBg) a.filter='url(#slabSh)';
+    mk('rect',a,parent);
   }
   var rows = real ? 2 : 3;
   var top0 = real ? H.grid.firstIconRowTop : H.widget2x2.top;
@@ -561,20 +575,22 @@ function buildHome(){
         'font-size':H.label.inkHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
         'font-family':"'PingFang SC',"+FONT,filter:'url(#labSh)'},g).textContent=names[i2]||'';
     }else{
+      /* 占位模式下不画标签 —— 没有应用名可写，画个条反而多余 */
       slab(cx,cy,sz,sz,rx,0.20,g,gridDark);
-      /* 标签也用块 —— 占住实测的标签条带高度，但不编应用名 */
-      var lw=sz*0.56, lh=H.label.inkHeight*G*0.80;
-      slab(cx+(sz-lw)/2, cy+sz+H.label.gapBelowIcon*G+(H.label.inkHeight*G-lh)/2, lw, lh, lh/2, 0.16, g, gridDark);
     }
   }
 
   /* --- 搜索胶囊 + Dock --- */
   var dk=$('dockRow');
-  mk('rect',{x:H.searchPill.left*G,y:H.searchPill.top*G,width:H.searchPill.width*G,
-    height:H.searchPill.height*G,rx:H.searchPill.height*G/2,fill:'#000','fill-opacity':'.3'},dk);
-  mk('text',{x:(H.searchPill.left+H.searchPill.width/2)*G,
-    y:(H.searchPill.top+H.searchPill.height*0.72)*G,'font-size':H.searchPill.height*G*0.5,
-    'text-anchor':'middle',fill:'#fff','font-family':"'PingFang SC',"+FONT},dk).textContent='搜索';
+  /* 搜索胶囊只在**真图标**模式下画：那时主屏是在复刻真机。
+     占位模式下整屏只剩抽象块，再摆一个写着「搜索」的胶囊就不统一了。 */
+  if(real){
+    mk('rect',{x:H.searchPill.left*G,y:H.searchPill.top*G,width:H.searchPill.width*G,
+      height:H.searchPill.height*G,rx:H.searchPill.height*G/2,fill:'#000','fill-opacity':'.3'},dk);
+    mk('text',{x:(H.searchPill.left+H.searchPill.width/2)*G,
+      y:(H.searchPill.top+H.searchPill.height*0.72)*G,'font-size':H.searchPill.height*G*0.5,
+      'text-anchor':'middle',fill:'#fff','font-family':"'PingFang SC',"+FONT},dk).textContent='搜索';
+  }
   /* Dock 宽度**跟图标数量走**，不是写死 406pt。
      真机那张只有 Safari 和信息两个图标，Dock 就是窄的；满 4 个才撑到实测的 406pt。
      以「图标边长 + 列距间隙」为一格，两端各留一份内边距（由实测的 406pt 反推）。 */
