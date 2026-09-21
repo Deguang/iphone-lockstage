@@ -209,7 +209,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
       <div class="phead"><h2>时钟字形</h2><em>SFNS.ttf 可变轴</em></div>
       <div class="rows">
         <div class="row"><label for="cTime">时间</label><input type="text" id="cTime"><output></output></div>
-        <div class="row"><label for="cBrand">署名</label><input type="text" id="cBrand" value="@萌物壁纸"><output></output></div>
+        <div class="row"><label for="cBrand">署名</label><input type="text" id="cBrand" placeholder="@你的账号（选填）"><output></output></div>
         <div class="row"><label for="wdth">宽度 <b>wdth</b></label>
           <input type="range" id="wdth" min="30" max="150" step="1" value="45"><output id="oWdth">45</output></div>
         <div class="row"><label for="wght">字重 <b>wght</b></label>
@@ -311,7 +311,7 @@ var wpURL=seed();
 var lastLayout=null;
 /* 默认值＝**拉伸态实测**：宽 76.1% 屏宽、中线 25.0% 屏高（src/ios-metrics.json）。
    wdth 40 对应实测单字宽高比 0.26 ≈ SF 常规 0.76 的三分之一。 */
-var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,inkMode:'auto',brand:'@萌物壁纸',time:nowHHMM()};
+var S={mode:'stretched',wdth:40,wght:260,fsize:22.4,ypos:27.3,alpha:0.60,island:true,lunar:true,btns:true,dark:false,inkMode:'auto',brand:'',time:nowHHMM()};
 
 /**
  * 用**字形路径**排时钟，不用 <text>。
@@ -621,8 +621,16 @@ function buildHome(){
   var inp=$(s[0]),out=$(s[1]);
   inp.addEventListener('input',function(){S[s[0]]=parseFloat(inp.value);out.textContent=S[s[0]].toFixed(s[2]);apply()});
 });
+/* 署名默认留空（公开的工具不该自带别人的账号名），但**记住你填过的** ——
+   否则每次打开都要重打一遍。只存这一个字段，存在本机。 */
+var BRAND_KEY='lockstage.brand';
+try{ var saved=localStorage.getItem(BRAND_KEY); if(saved!=null) S.brand=saved; }catch(e){}
 $('cBrand').value=S.brand;
-$('cBrand').addEventListener('input',function(){S.brand=this.value;apply()});
+$('cBrand').addEventListener('input',function(){
+  S.brand=this.value;
+  try{ localStorage.setItem(BRAND_KEY,this.value); }catch(e){}
+  apply();
+});
 $('cTime').value=S.time;
 $('cTime').addEventListener('input',function(){S.time=this.value||nowHHMM();apply()});
 
