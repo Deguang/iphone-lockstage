@@ -183,7 +183,8 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
           <g id="dockRow"></g>
           <!-- home 指示条：实测 x 138.3–301.3pt（宽 137，居中于 219.8）、距底 41.7pt。
                我原先写的 160pt 宽偏了。锁屏上没有这条，只有主屏有。 -->
-          <rect x="454" y="2793" width="411" height="15" rx="8" fill="#fff" opacity=".9"/>
+          <!-- 占位模式下由 buildHome() 隐掉，走简洁风。 -->
+          <rect id="homeBar" x="454" y="2793" width="411" height="15" rx="8" fill="#fff" opacity=".9"/>
         </g>
         <!-- 署名：机模存在的意义之一就是防盗，所以每张都带。
              白字 + 投影，和图标标签同一套处理 —— 深浅壁纸通吃。 -->
@@ -584,8 +585,11 @@ function buildHome(){
 
   /* --- 搜索胶囊 + Dock --- */
   var dk=$('dockRow');
-  /* 搜索胶囊只在**真图标**模式下画：那时主屏是在复刻真机。
-     占位模式下整屏只剩抽象块，再摆一个写着「搜索」的胶囊就不统一了。 */
+  /* 搜索胶囊和 home 指示条都只在**真图标**模式下出现：那时主屏是在复刻真机，
+     该有的都得有。占位模式走简洁风 —— 整屏只剩抽象块和 Dock，
+     再摆一个写着「搜索」的胶囊、底下压一条 home 条，就不统一了。 */
+  var hb=document.getElementById('homeBar');
+  if(hb) hb.style.display = real ? '' : 'none';
   if(real){
     mk('rect',{x:H.searchPill.left*G,y:H.searchPill.top*G,width:H.searchPill.width*G,
       height:H.searchPill.height*G,rx:H.searchPill.height*G/2,fill:'#000','fill-opacity':'.3'},dk);
