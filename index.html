@@ -370,8 +370,11 @@ function apply(){
 
   $('statusBar').setAttribute('color',ink);      // 图元用 currentColor
   $('carrier').setAttribute('fill',ink);
+  /* 署名跟着自动配色走 —— 白字 72% 在浅色壁纸上几乎看不见（封面和 p_01 都糊了）。
+     和时钟同一个 ink：背景亮就用深色。 */
   $('brandMark').textContent=S.brand||'';
   $('brandMark').setAttribute('font-family',"'PingFang SC',"+FONT);
+  $('brandMark').setAttribute('fill',ink);
   $('carrier').textContent=S.time;               // 真机主屏左上角是时间，不是运营商
   $('dateL').setAttribute('fill',ink);
   $('island').style.display=S.island?'':'none';
@@ -596,12 +599,15 @@ function blobToImage(b){
  * 背景取壁纸本身的主色调，不用灰底。
  */
 async function renderPair(){
+  /* 并排图里**屏内署名要关掉** —— 底部背景区已经有一个，
+     两处都画就是重复。屏内那个只服务于整屏封面。 */
+  var keepBrand=S.brand; S.brand='';
   var keep=PAGE;
   showTab('lock'); apply(); await new Promise(function(r){setTimeout(r,80)});
   var a=await renderPNG();
   showTab('home'); apply(); await new Promise(function(r){setTimeout(r,80)});
   var b=await renderPNG();
-  showTab(keep); apply();
+  showTab(keep); S.brand=keepBrand; apply();
   if(!a||!b) return null;
   var W=1500,H=2000, gap=Math.round(W*0.045), side=Math.round(W*0.022);
   var pw=Math.round((W-gap-side*2)/2), ph=Math.round(pw*SH/SW);
@@ -634,7 +640,12 @@ async function renderPair(){
     x.font='500 '+Math.round(W*0.027)+'px "PingFang SC",-apple-system,sans-serif';
     x.textAlign='center'; x.textBaseline='alphabetic';
     x.shadowColor='rgba(0,0,0,.5)'; x.shadowBlur=Math.round(W*0.008); x.shadowOffsetY=2;
-    x.fillStyle='rgba(255,255,255,.78)';
+    // 底部背景是壁纸主色压暗四成，通常偏暗，但浅色壁纸压完仍可能偏亮
+    var bgLum=0.3;
+    try{ var p=x.getImageData(Math.round(W/2),H-Math.round(W*0.04),1,1).data;
+         bgLum=(0.2126*p[0]+0.7152*p[1]+0.0722*p[2])/255; }catch(e){}
+    x.fillStyle=bgLum>0.55?'rgba(0,0,0,.62)':'rgba(255,255,255,.78)';
+    if(bgLum>0.55) x.shadowColor='rgba(255,255,255,.45)';
     x.fillText(S.brand, W/2, y0+ph+Math.round((H-y0-ph)/2)+Math.round(W*0.01));
     x.shadowColor='transparent';
   }
