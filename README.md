@@ -45,26 +45,65 @@ node tools/measure-ios.mjs reference/home.png
 | 搜索胶囊 | 61 × 30pt |
 
 **没实测的都标了出来**（`_caveat` / `_status: unverified`）：灵动岛在黑底截图上切不出来，
-圆角比例也量不准，锁屏那组还完全没测（模拟器锁屏要按 ⌘L，而 osascript 发按键被系统拦了）。
+圆角比例也量不准。锁屏那组后来测了（`lockScreen._status: "measured"`）——
+时钟和日期的墨迹包围盒都从 reference/lock.png、lock2.png 上量出来了，
+而**手电筒/相机按钮和 home 指示条实测是不存在的**（两张截图里那两块区域亮像素都是 0），
+所以页面也不画它们。
 标出来是为了别把猜的和量的混在一起 —— 这个项目里所有返工都源于这一点。
 
-## 玻璃时钟
+## 时钟：不是玻璃，是一层半透明白
 
-锁屏时钟不是「半透明文字」，是一块玻璃：靠边缘折射强、中间几乎不动，边缘有高光也有暗边。
+一开始把锁屏时钟当成玻璃做的：对字形求有向距离场（SDF），把梯度编码进位移图，
+再用 `feImage` + `feDisplacementMap` 推背后的画面（技法改编自
+[shuding/liquid-glass](https://github.com/shuding/liquid-glass)，MIT）。
 
-做法是对**字形**求有向距离场（SDF），把梯度编码进位移图的 R/G 通道，
-再用 `feImage` + `feDisplacementMap` 推背后的画面。
-技法改编自 [shuding/liquid-glass](https://github.com/shuding/liquid-glass)（MIT），
-原作对圆角矩形求 SDF，这里换成字形。
+**实测把这套推翻了。** 在真机截图上取了 397 个采样点，时钟像素相对背景的比值
+α = 0.601 ± 0.072，而且**这个比值在明暗差异很大的几块背景上保持恒定**。
+折射的比值会随背景结构变化；恒定比值只能是一层固定透明度的白。
+于是 SDF、位移折射、高光、暗边全部删掉了。
 
-字宽走 SF 的 `wdth` 可变轴（本机 `SFNS.ttf` 实测范围 30–150）。
-**这条轴只有 Safari 和 macOS 上的 Chrome 能驱动系统字体**，别处会静默回退成常规宽度 ——
-所以字号是量出文字实际宽度后反推的，轴生效与否都不会溢出。
+留下来的是另一半，而那一半是真需要的：**字形必须走 Core Text，不能用 SVG `<text>`。**
+iOS 用的是 SF 的宽度轴（wdth）压缩字形，而 librsvg/fontconfig 够不到这条轴，
+CoreText 按名字取也会静默回退（要 `.SFNS-Compressed`，给的是 Times New Roman）。
+所以字形由 `tools/glyph-paths`（Swift + Core Text）导成 SVG path，网页直接画 `<path>`，
+任何浏览器都精确。
+
+还有一条是出图才发现的：**时钟按字高定大小，不按宽度。**
+真机是固定字号，显示什么数字宽度就随之变；按宽度反推会让「11:49」（两个窄的 1）
+被放得比「16:55」更高，压到农历那行上。
 
 ## 状态
 
-v0.1，能用但没做完。锁屏版式待实测，景深效果（主体从时钟前穿过）还没接。
+能用。版式常量（主屏 + 锁屏）都已实测，时钟、农历日期、灵动岛、并排导出都在。
+景深效果（主体从时钟前穿过）还没接。
+
+## 素材：带工具，不带别人的资产
+
+主屏图标是**实测几何 + 开放许可符号**拼的 —— 容器用 `src/ios-metrics.json` 里
+量出来的 68pt / 25% 圆角 / 100.7pt 列距，里面的符号取自
+[Phosphor Icons](https://github.com/phosphor-icons/core)（MIT）。
+刻意不模仿任何一家的具体应用图标：开放许可管的是「文件能不能再分发」，
+管不了「图案像不像别人的商标」，所以只复刻形式语言，不复刻图案。
+
+**Apple 的图标美术（`src/icons.js`，约 729 KB）不入库。** 想用真图标就自己抠：
+
+```bash
+xcrun simctl io booted screenshot reference/home.png
+node tools/extract-icons.mjs reference/home.png     # → src/icons.js
+```
+
+放进 `src/` 后页面自动优先用它，占位图标让位。
+
+唯一的例外是 `src/glyphs.js`（22 个数字的轮廓，20 KB）——
+页面缺了它就不画时钟，而时钟是这个工具的全部意义。它版权归 Apple，
+**不在本仓库的 MIT 范围内**，详见 [NOTICE](NOTICE)。
 
 ## 授权
 
-MIT。玻璃技法改编自 shuding/liquid-glass（MIT）。
+MIT —— **仅适用于本项目的代码**。
+
+`src/glyphs.js` 是 Apple 的字形轮廓，不在此范围内；主屏占位图标的符号来自
+Phosphor Icons（MIT）。见 [NOTICE](NOTICE)。
+
+早期的玻璃时钟技法改编自 [shuding/liquid-glass](https://github.com/shuding/liquid-glass)（MIT），
+那部分代码后来被实测推翻并删除了，致谢保留。

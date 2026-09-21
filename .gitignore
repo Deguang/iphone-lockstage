@@ -1,7 +1,15 @@
 node_modules
 reference/*.png
 .DS_Store
-src/icons.js
-src/glyphs.js
 tools/glyph-paths/glyph-paths
 *.dSYM/
+
+# Apple 的图标美术**不入库** —— 729 KB 逐像素位图，是最容易被识别和下架的东西。
+# 页面缺了它会画「实测几何 + Phosphor（MIT）符号」的占位图标，观感依然是 iOS 主屏。
+# 想要真图标：node tools/extract-icons.mjs reference/home.png 自己抠一份放这儿，
+# 页面会自动优先用它。
+src/icons.js
+
+# src/glyphs.js 例外，纳入仓库了：它是 22 个数字的轮廓几何（20 KB，不含字体文件），
+# 而页面缺了它 layoutClock() 直接 return null —— 不画时钟，工具就没有意义了。
+# 授权范围见 NOTICE。

@@ -1,0 +1,54 @@
+NOTICE — 第三方素材的授权范围
+
+## 本仓库自己的代码
+
+LICENSE（MIT）适用于：index.html、tools/ 下的脚本、src/ios-metrics.json 里的实测常量、README。
+
+## 占位 app 图标：Phosphor Icons（MIT）
+
+主屏上的图标是「**实测几何 + 开放许可符号**」拼出来的，不是任何一家的应用图标：
+
+  · 容器几何（68pt 边长、25% 圆角、100.7pt 列距……）来自 src/ios-metrics.json，
+    由 tools/measure-ios.mjs 从模拟器截图量出，是本项目自己的实测成果
+  · 里面的符号取自 Phosphor Icons 的 fill 字形
+    MIT License, Copyright (c) 2023 Phosphor Icons — https://github.com/phosphor-icons/core
+
+刻意**不模仿任何一家的具体应用图标**。开放许可解决的是「这些文件能不能再分发」，
+解决不了「这个图案像不像别人的商标」—— 所以只复刻形式语言（圆角方块 + 渐变底 +
+居中白色符号），不复刻图案，应用名也用通用名词。
+
+## src/glyphs.js：Apple 的字形轮廓
+
+这一个文件是例外，它**不在 MIT 范围内**：
+
+  src/glyphs.js   SF 字体 0–9 和冒号的轮廓（22 个字形，两种宽度变体），
+                  由 tools/glyph-paths 经 Core Text 导出为 SVG path。
+                  版权归 Apple Inc.，本项目不持有、也无法转授其再分发权利。
+
+收录它的原因：页面在缺少它时 layoutClock() 直接 return null —— **不画时钟**，
+而锁屏时钟是这个工具的全部意义。文件里只有路径几何，不含字体文件本身。
+
+要完全避开它：删掉 src/glyphs.js，页面会退化为不显示时钟；或自行从你机器上的
+SF 字体重新导出（见下）。
+
+## src/icons.js：Apple 的图标美术，**不入库**
+
+从 iOS 模拟器截图抠出的应用图标、小组件和状态栏位图（约 729 KB）。
+版权归 Apple Inc.，**本仓库不收录也不分发它**。
+
+想在本地用真图标，自己抠一份：
+
+  xcrun simctl io booted screenshot reference/home.png
+  node tools/extract-icons.mjs reference/home.png          # → src/icons.js
+
+放进 src/ 后页面会自动优先使用它，占位图标随之让位。
+
+## 重新生成字形
+
+  cd tools/glyph-paths && swiftc -O -o glyph-paths main.swift
+  ./glyph-paths --wdth 37 --wght 250 > ../../src/glyphs.js
+
+## 商标
+
+Apple、iOS、iPhone、San Francisco (SF) 是 Apple Inc. 的商标。
+本项目与 Apple Inc. 无任何关联，也未获其背书。

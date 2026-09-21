@@ -1,5 +1,29 @@
-<title>iPhone 壁纸预演台</title>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iPhone 壁纸预演台 · lockstage</title>
+<meta name="description" content="把壁纸放进按真机实测尺寸复刻的 iPhone 锁屏与主屏里预览。版式常量全部来自 iOS 26 模拟器截图实测，可用 tools/measure-ios.mjs 复现。">
+<link rel="canonical" href="https://deguang.github.io/lockstage/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0D10'/%3E%3Crect x='10' y='5' width='12' height='22' rx='3' fill='none' stroke='%234C8DFF' stroke-width='2'/%3E%3Crect x='13' y='7' width='6' height='1.6' rx='.8' fill='%234C8DFF'/%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://deguang.github.io/lockstage/">
+<meta property="og:title" content="iPhone 壁纸预演台 · lockstage">
+<meta property="og:description" content="把壁纸放进按真机实测尺寸复刻的 iPhone 锁屏与主屏里预览。版式常量全部来自 iOS 26 模拟器截图实测，可用 tools/measure-ios.mjs 复现。">
+<meta property="og:image" content="https://deguang.github.io/lockstage/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="zh_CN">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="iPhone 壁纸预演台 · lockstage">
+<meta name="twitter:description" content="把壁纸放进按真机实测尺寸复刻的 iPhone 锁屏与主屏里预览。版式常量全部来自 iOS 26 模拟器截图实测，可用 tools/measure-ios.mjs 复现。">
+<meta name="twitter:image" content="https://deguang.github.io/lockstage/assets/og.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+</head>
+<body>
 <style>
 :root{
   --ink:#0B0D10; --panel:#14181D; --panel-2:#1A1F26; --line:#242B33;
@@ -84,8 +108,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 <header>
   <div>
     <h1>iPhone 壁纸预演台</h1>
-    <p class="sub">玻璃时钟走字形 SDF 位移折射，技法改编自
-      <a href="https://github.com/shuding/liquid-glass">shuding/liquid-glass</a>（MIT）</p>
+    <p class="sub">版式常量全部来自 iOS 26 模拟器截图实测，可用 <code>tools/measure-ios.mjs</code> 复现 · 时钟经 397 点采样实测为平涂半透明（α=0.60），字形走 Core Text 的 SF 宽度轴 · <a href="https://github.com/Deguang/lockstage">源码</a></p>
   </div>
   <button class="theme-btn" id="themeBtn" type="button">切换主题</button>
 </header>
@@ -422,6 +445,46 @@ function apply(){
 (function(){
   var G=3, NS='http://www.w3.org/2000/svg';
   var H=M.homeScreen, SB=M.statusBar;
+
+  /* ── 占位 app 图标 ─────────────────────────────────────────────
+     **不收录 Apple 的图标素材。** 这里画的是「实测几何 + 开放许可符号」：
+       · 容器：68pt 边长、25% 圆角 —— 来自 src/ios-metrics.json 的实测值
+       · 符号：Phosphor Icons（MIT，(c) 2023 Phosphor Icons）的 fill 字形
+     刻意**不模仿任何一家的具体应用图标**：开放许可解决的是「文件能不能再分发」，
+     解决不了「图案像不像别人的商标」。所以只复刻形式语言，不复刻图案。
+     想要真图标的，用 tools/extract-icons.mjs 从自己机器的模拟器截图抠出
+     src/icons.js 放进来，页面会自动优先用它。 */
+  var PH={
+    'camera':'M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm-44,76a36,36,0,1,1-36-36A36,36,0,0,1,164,132Z',
+    'calendar-blank':'M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,48H48V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24Z',
+    'map-pin':'M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z',
+    'music-note':'M210.3,56.34l-80-24A8,8,0,0,0,120,40V148.26A48,48,0,1,0,136,184V98.75l69.7,20.91A8,8,0,0,0,216,112V64A8,8,0,0,0,210.3,56.34Z',
+    'envelope':'M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.18V181.82Z',
+    'clock':'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm56,112H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48a8,8,0,0,1,0,16Z',
+    'image':'M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM156,88a12,12,0,1,1-12,12A12,12,0,0,1,156,88Zm60,112H40V160.69l46.34-46.35a8,8,0,0,1,11.32,0h0L165,181.66a8,8,0,0,0,11.32-11.32l-17.66-17.65L173,138.34a8,8,0,0,1,11.31,0L216,170.07V200Z',
+    'gear':'M216,130.16q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.6,107.6,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.29,107.29,0,0,0-26.25-10.86,8,8,0,0,0-7.06,1.48L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.6,107.6,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z',
+    'compass':'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm51.58,57.79-32,64a4.08,4.08,0,0,1-1.79,1.79l-64,32a4,4,0,0,1-5.37-5.37l32-64a4.08,4.08,0,0,1,1.79-1.79l64-32A4,4,0,0,1,179.58,81.79Z',
+    'chat-circle':'M232,128A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Z',
+    'cloud-sun':'M164,72a76.2,76.2,0,0,0-20.26,2.73,55.63,55.63,0,0,0-9.41-11.54l9.51-13.57a8,8,0,1,0-13.11-9.18L121.22,54A55.9,55.9,0,0,0,96,48c-.59,0-1.16,0-1.74,0L91.37,31.71a8,8,0,1,0-15.75,2.77L78.5,50.82A56.1,56.1,0,0,0,55.23,65.67L41.61,56.14a8,8,0,1,0-9.17,13.11L46,78.77A55.55,55.55,0,0,0,40,104c0,.57,0,1.15,0,1.72L23.71,108.6a8,8,0,0,0,1.38,15.88,8.24,8.24,0,0,0,1.39-.12l16.32-2.88a55.74,55.74,0,0,0,5.86,12.42A52,52,0,0,0,84,224h80a76,76,0,0,0,0-152ZM92.92,120.76a52.14,52.14,0,0,0-31,4.17,40,40,0,0,1,66.62-44.17A76.26,76.26,0,0,0,92.92,120.76Z',
+    'list-checks':'M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM117.66,149.66l-32,32a8,8,0,0,1-11.32,0l-16-16a8,8,0,0,1,11.32-11.32L80,164.69l26.34-26.35a8,8,0,0,1,11.32,11.32Zm0-64-32,32a8,8,0,0,1-11.32,0l-16-16A8,8,0,0,1,69.66,90.34L80,100.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM192,168H144a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Zm0-64H144a8,8,0,0,1,0-16h48a8,8,0,0,1,0,16Z'
+  };
+  /* iOS 那种饱和渐变底，深色在右下 */
+  var TPAL=[['#FF9F0A','#FF6A00'],['#FF453A','#D62E23'],['#30D158','#1DB954'],['#0A84FF','#0060DF'],
+            ['#BF5AF2','#8E44D0'],['#FF375F','#E0245E'],['#FFD60A','#F0A500'],['#8E8E93','#5A5A5E'],
+            ['#5E5CE6','#3F3DC2'],['#64D2FF','#00A3E0'],['#32ADE6','#1B85C4'],['#AC8E68','#8A6F4E']];
+  var tileN=0;
+  function tile(x,y,w,h,rx,pal,glyph,parent){
+    var defs=$('scr').querySelector('defs'), id='tg'+(tileN++);
+    var lg=mk('linearGradient',{id:id,x1:'0',y1:'0',x2:'0.35',y2:'1'},defs);
+    mk('stop',{offset:'0','stop-color':TPAL[pal%TPAL.length][0]},lg);
+    mk('stop',{offset:'1','stop-color':TPAL[pal%TPAL.length][1]},lg);
+    mk('rect',{x:x,y:y,width:w,height:h,rx:rx,fill:'url(#'+id+')'},parent);
+    if(glyph&&PH[glyph]){
+      var k=Math.min(w,h)*0.5/256, gx=x+(w-256*k)/2, gy=y+(h-256*k)/2;
+      mk('path',{d:PH[glyph],transform:'translate('+gx+' '+gy+') scale('+k+')',
+                 fill:'#fff','fill-opacity':'0.95'},parent);
+    }
+  }
   var mk=function(t,a,parent){var e=document.createElementNS(NS,t);
     for(var k in a)e.setAttribute(k,a[k]); if(parent)parent.appendChild(e); return e};
 
@@ -440,15 +503,30 @@ function apply(){
     for(var i=0;i<sg.count;i++)
       mk('rect',{x:(sg.x0+i*sg.pitch)*G,y:(sg.bottom-sg.dotH)*G,
         width:sg.dotW*G,height:sg.dotH*G,rx:sg.dotW*G*0.3},bars);
-    var wf=SB.wifi, wcx=(wf.x0+wf.x1)/2*G, wbot=wf.bottom*G, arc='';
-    [1.0,0.62,0.26].forEach(function(kk){var r=wf.w/2*kk*G;
-      arc+='M'+(wcx-r)+' '+(wbot-r*0.42)+' A'+r+' '+r+' 0 0 1 '+(wcx+r)+' '+(wbot-r*0.42)+' ';});
+    /* Wi-Fi：**是一个约 110 度的扇形，不是半圆。**
+       原来三道弧从 -r 画到 +r，那是 180 度，看着又扁又宽。
+       正确构造：以底部顶点为圆心，每道弧从 215 度扫到 325 度，外加顶点处一个实心点。
+       半径由实测宽度反推：2·cos(35°)·r = w。 */
+    var wf=SB.wifi, wcx=(wf.x0+wf.x1)/2*G, wbot=wf.bottom*G;
+    var R=wf.w*G/(2*0.819), CX=0.819, CY=0.574, arc='';
+    [1.0,0.62].forEach(function(kk){var r=R*kk;
+      arc+='M'+(wcx-CX*r)+' '+(wbot-CY*r)+'A'+r+' '+r+' 0 0 1 '+(wcx+CX*r)+' '+(wbot-CY*r)+' ';});
     $('wifi').setAttribute('d',arc);
     $('wifi').setAttribute('stroke','currentColor');
-    $('wifi').setAttribute('stroke-width',wf.h*G*0.155);
+    $('wifi').setAttribute('stroke-width',R*0.19);
+    $('wifi').setAttribute('fill','none');
+    $('wifi').setAttribute('stroke-linecap','round');
+    mk('circle',{cx:wcx,cy:wbot-R*0.10,r:R*0.135,fill:'currentColor'},$('wifi').parentNode);
+    /* 电池：外框 + 右侧正极触点 + 内部电量条。原来只有一个空外框。 */
     var bt=SB.battery, bx=bt.x0*G, by=bt.top*G, bw=bt.w*G, bh=bt.h*G;
-    mk('rect',{x:bx,y:by,width:bw-bh*0.26,height:bh,rx:bh*0.32,fill:'none',
-      stroke:'currentColor','stroke-opacity':'.38','stroke-width':bh*0.1},$('batt'));
+    var body=bw-bh*0.30, LV=0.68;
+    mk('rect',{x:bx,y:by,width:body,height:bh,rx:bh*0.32,fill:'none',
+      stroke:'currentColor','stroke-opacity':'.38','stroke-width':bh*0.09},$('batt'));
+    mk('rect',{x:bx+body+bh*0.06,y:by+bh*0.33,width:bh*0.16,height:bh*0.34,
+      rx:bh*0.07,fill:'currentColor','fill-opacity':'.38'},$('batt'));
+    var ins=bh*0.17;
+    mk('rect',{x:bx+ins,y:by+ins,width:(body-ins*2)*LV,height:bh-ins*2,
+      rx:(bh-ins*2)*0.34,fill:'currentColor'},$('batt'));
   }
 
   /* --- 主屏：优先用从真机截图抠出的**真实图标**（src/icons.json），
@@ -456,9 +534,13 @@ function apply(){
          见 tools/extract-icons.mjs。 --- */
   var g=$('appGrid'), sz=H.icon.size*G, rx=sz*H.icon.cornerRadiusRatio;
   var colX=function(c){return (H.grid.marginLeft+c*H.grid.columnPitch)*G};
-  var names=['日历','照片','提醒事项','News','地图','健康','钱包','设置'];
+  /* 通用名词，不用任何一家的应用名 —— 配原生观感的图标再用真实应用名就偏向模仿了 */
+  var names=['相机','日历','地图','音乐','邮件','时钟','相册','设置'];
+  var nGly=['camera','calendar-blank','map-pin','music-note','envelope','clock','image','gear'];
+  var dGly=['compass','chat-circle','music-note','camera'];
 
-  var wNames=['地图','日历'];
+  var wNames=['天气','待办'];
+  var wGly=['cloud-sun','list-checks'];
   if(IC&&IC.widgets&&IC.widgets.length){
     IC.widgets.forEach(function(w,wi){
       mk('image',{href:w.uri,x:w.x,y:H.widget2x2.top*G,width:w.w,height:H.widget2x2.height*G},g);
@@ -469,15 +551,19 @@ function apply(){
     });
   }else{
     var wW=(H.icon.size*2+(H.grid.columnPitch-H.icon.size))*G;
-    [0,2].forEach(function(c){mk('rect',{x:colX(c),y:H.widget2x2.top*G,width:wW,
-      height:H.widget2x2.height*G,rx:H.widget2x2.height*G*0.22,fill:'#fff','fill-opacity':'.9'},g);});
+    [0,2].forEach(function(c,ci){
+      tile(colX(c),H.widget2x2.top*G,wW,H.widget2x2.height*G,H.widget2x2.height*G*0.22,ci+9,wGly[ci],g);
+      mk('text',{x:colX(c)+wW/2,y:(H.widget2x2.labelTop+H.widget2x2.labelHeight)*G,
+        'font-size':H.widget2x2.labelHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
+        'font-family':"'PingFang SC',"+FONT,filter:'url(#labSh)'},g).textContent=wNames[ci]||'';
+    });
   }
 
   for(var i2=0;i2<8;i2++){
     var cx=colX(i2%4), cy=(H.grid.firstIconRowTop+Math.floor(i2/4)*H.grid.rowPitch)*G;
     var got=IC&&IC.icons&&IC.icons.filter(function(t){return t.row===Math.floor(i2/4)&&t.col===i2%4})[0];
     if(got) mk('image',{href:got.uri,x:cx,y:cy,width:sz,height:sz},g);
-    else mk('rect',{x:cx,y:cy,width:sz,height:sz,rx:rx,fill:'hsl('+(i2*44+14)+' 76% 57%)'},g);
+    else tile(cx,cy,sz,sz,rx,i2,nGly[i2],g);
     mk('text',{x:cx+sz/2,y:cy+sz+(H.label.gapBelowIcon+H.label.inkHeight)*G,
       'font-size':H.label.inkHeight*G*1.12,'text-anchor':'middle',fill:'#fff',
       'font-family':"'PingFang SC',"+FONT,fill:'#fff',filter:'url(#labSh)'},g).textContent=names[i2];
@@ -504,7 +590,7 @@ function apply(){
   for(var j=0;j<dn;j++){
     var dx=(dockL+pad+j*pitch)*G;
     if(IC&&IC.dock&&IC.dock[j]) mk('image',{href:IC.dock[j].uri,x:dx,y:dy,width:sz,height:sz},dk);
-    else mk('rect',{x:dx,y:dy,width:sz,height:sz,rx:rx,fill:'hsl('+(j*70+20)+' 72% 55%)'},dk);
+    else tile(dx,dy,sz,sz,rx,j+8,dGly[j],dk);
   }
 })();
 
@@ -766,3 +852,5 @@ window.lockstage={
 };
 })();
 </script>
+</body>
+</html>
