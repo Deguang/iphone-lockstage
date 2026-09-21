@@ -236,6 +236,30 @@ var $=function(i){return document.getElementById(i)};
 /** 默认当前时间 —— 预演壁纸看的就是「现在长什么样」 */
 function nowHHMM(){var d=new Date();
   return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+/* 日期同理要算，不能写死。
+   以前这里是字符串 '9月20日 周日 · 丙午年八月初十' —— 做页面那天的日期，
+   此后每次导出都印着同一天。这个项目的立身之本是「每个数字都可复现」，
+   写死日期和写死版式常量是同一类问题。
+   农历走 Intl 的中国历（浏览器自带 ICU），**不嵌那张 200 个魔法数字的表** ——
+   那种表没法独立核对。和 redbook-op 的 coverGen 用的是同一个办法。 */
+var LUNAR_D=['','初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+  '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+  '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+function lunarStr(d){
+  try{
+    var ps=new Intl.DateTimeFormat('zh-CN-u-ca-chinese',
+      {year:'numeric',month:'long',day:'numeric'}).formatToParts(d);
+    var g=function(t){var x=ps.filter(function(p){return p.type===t})[0];return x?x.value:''};
+    var day=Number(g('day'));
+    return g('yearName')+'年'+g('month')+(LUNAR_D[day]||day);
+  }catch(e){ return ''; }
+}
+function nowDate(withLunar){
+  var d=new Date(), wd='日一二三四五六';
+  var s=(d.getMonth()+1)+'月'+d.getDate()+'日 周'+wd[d.getDay()];
+  var l=withLunar?lunarStr(d):'';
+  return l ? s+' · '+l : s;
+}
 /* 实测常量。来源 src/ios-metrics.json —— 全部由 tools/measure-ios.mjs
    从 iOS 26.2 模拟器截图量出，可复现。别在这里手改数字。 */
 var M={"screen":{"pt": {"w": 440, "h": 956}, "px": {"w": 1320, "h": 2868}, "scale": 3},"statusBar": {"_measured": "reference/home.png，逐个图元单独取包围盒（不是整条带）", "inkTop": 25, "inkBottom": 39.0, "time": {"x0": 60.7, "x1": 106.3, "w": 46.0, "inkTop": 26.0, "inkHeight": 13.3, "fontSize": 18.5, "_fontNote": "**字号 ≠ 墨迹高**。数字的 cap height ≈ 0.72×字号，所以 13.3÷0.72≈18.5pt。\n我一度直接把墨迹高 14.3 当字号写进去，时间小了 1.3 倍 —— 这是「不精致」的主因之一。"}, "signal": {"count": 4, "dotW": 3.7, "dotH": 3.7, "pitch": 6.0, "x0": 312.3, "bottom": 38.7, "_shapeNote": "**是四个等大的圆点，不是递增高度的信号条。**我按老 iOS 的印象画成了递增条。"}, "wifi": {"x0": 341.7, "x1": 360.3, "w": 19.0, "h": 14.0, "top": 25.0, "bottom": 38.7}, "battery": {"x0": 368.3, "x1": 398.3, "w": 30.3, "h": 14.3, "top": 25.0, "bottom": 39.0}}, "homeScreen": {"icon": {"_measured": "从 reference/home.png 的「日历」图标（x105–308, y934–1137）逐行取左上角轮廓，再拟合", "size": 68, "cornerRadiusRatio": 0.25, "cornerExponent": 2.0, "_shapeNote": "**实测是普通圆角矩形（n=2.0），半径＝边长的 25%，残差 0.00018。**\n广为流传的「Apple squircle，超椭圆 n≈5、r=22.37%」对 iOS 26 不成立 —— \n验算：y=12.5% 处圆角矩形给 x=3.35%、实测 3.5%，而 n=5 的超椭圆给 0.16%，差一个数量级。\n我原先抄的就是那个 22.37%，当时标了「未实测」，现在实测推翻了它。"}, "grid": {"columns": 4, "columnPitch": 100.7, "rowPitch": 108.7, "marginLeft": 35, "marginRight": 35, "firstIconRowTop": 311.3}, "label": {"_measured": "标签条带 y 1158–1190px", "inkHeight": 11, "gapBelowIcon": 6.7}, "widget2x2": {"_measured": "组件条带 y 282–811px", "top": 94, "height": 176.7, "left": 31, "right": 408.7, "labelTop": 277.3, "labelHeight": 11}, "searchPill": {"_measured": "胶囊条带 y 2291–2380px", "top": 763.7, "height": 30, "left": 189.3, "width": 61}, "dock": {"_measured": "Dock 条带 y 2465–2816px", "top": 821.7, "height": 117.3, "left": 17, "width": 406}}, "lockScreen": {"clock": {"inkTopPt": 110.0, "inkBottomPt": 226.3, "inkHeightPt": 116.7, "inkLeftPt": 66.0, "inkRightPt": 421.7, "inkWidthPt": 356.0, "widthPctOfScreen": 80.9, "heightPctOfScreen": 12.2, "centerYPctOfScreen": 17.6, "stringAspect": 3.05, "digitAspect": 0.61, "_digitAspectNote": "单个数字 宽÷墨迹高。SF 常规宽度约 0.76，所以 iOS 把字压到了**八成左右**，不是极窄。我一度按参考图估成 1.43 并去找最窄的字体（DIN Condensed 2.21、wdth 30），方向整个错了。", "_glyphWidthsPt": [71.7, 70.7, 19.3, 74.7, 41.3], "_glyphNote": "0 / 9 / : / 4 / 1。冒号 19.3pt，数字 1 比其它数字窄（41.3 vs ~71）。"}, "clockStretched": {"_measured": "reference/lock2.png。壁纸是高饱和紫红，时钟是低饱和浅色 —— 用「亮度>0.62 且饱和<0.22」分离，比「原图−模糊」干净得多。", "inkWidthPt": 335.0, "inkHeightPt": 251.3, "inkLeftPt": 49.0, "inkRightPt": 383.7, "inkTopPt": 113.3, "inkBottomPt": 364.3, "widthPctOfScreen": 76.1, "heightPctOfScreen": 26.3, "centerYPctOfScreen": 25.0, "stringAspect": 1.33, "digitAspect": 0.26, "_glyphWidthsPt": [43.3, 69.0, 63.3], "_note": "「1」43.3pt 比其它数字窄（约 65pt）。单字 0.26 ≈ SF 常规 0.76 的三分之一，对应 wdth 轴压到 30–40 一带。"}, "date": {"_measured": "reference/lock2.png，同上按饱和度分离", "inkTopPt": 98.0, "inkHeightPt": 12.0, "inkLeftPt": 78.3, "inkRightPt": 361.0, "_content": "「9月20日周日 · 丙午年八月初十」——**农历是 iOS 原生就带的**。", "_supersedes": "早先从 lock.png 量到的 顶86/高19 混进了壁纸边缘，以这组为准。"}}};
@@ -378,7 +402,7 @@ function apply(){
   $('carrier').textContent=S.time;               // 真机主屏左上角是时间，不是运营商
   $('dateL').setAttribute('fill',ink);
   $('island').style.display=S.island?'':'none';
-  $('dateL').textContent=S.lunar?'9月20日 周日 · 丙午年八月初十':'9月20日 周日';
+  $('dateL').textContent=nowDate(S.lunar);
   $('dateL').setAttribute('font-family',"'PingFang SC',"+FONT);
   $('carrier').setAttribute('font-family',"'PingFang SC',"+FONT);
 
