@@ -107,17 +107,17 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
 
 <header>
   <div>
-    <h1>iPhone 壁纸预演台</h1>
-    <p class="sub">版式常量全部来自 iOS 26 模拟器截图实测，可用 <code>tools/measure-ios.mjs</code> 复现 · 时钟经 397 点采样实测为平涂半透明（α=0.60），字形走 Core Text 的 SF 宽度轴 · <a href="https://github.com/Deguang/iphone-lockstage">源码</a></p>
+    <h1 data-i18n="h1">iPhone 壁纸预演台</h1>
+    <p class="sub" data-i18n="sub">版式常量全部来自 iOS 26 模拟器截图实测，可用 <code>tools/measure-ios.mjs</code> 复现 · 时钟经 397 点采样实测为平涂半透明（α=0.60），字形走 Core Text 的 SF 宽度轴 · <a href="https://github.com/Deguang/iphone-lockstage">源码</a></p>
   </div>
-  <button class="theme-btn" id="themeBtn" type="button">切换主题</button>
+  <button class="theme-btn" id="langBtn" type="button" style="margin-right:6px">EN</button><button class="theme-btn" id="themeBtn" type="button" data-i18n="theme">切换主题</button>
 </header>
 
 <div class="wrap">
   <div class="stage">
     <div class="tabs" role="tablist">
-      <button class="tab" id="tabLock" role="tab" aria-selected="true" type="button">锁屏</button>
-      <button class="tab" id="tabHome" role="tab" aria-selected="false" type="button">主屏</button>
+      <button class="tab" id="tabLock" role="tab" aria-selected="true" type="button" data-i18n="tabLock">锁屏</button>
+      <button class="tab" id="tabHome" role="tab" aria-selected="false" type="button" data-i18n="tabHome">主屏</button>
     </div>
 
     <div class="phone">
@@ -193,59 +193,59 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
       </svg>
     </div>
 
-    <label class="drop" id="drop" tabindex="0">拖一张壁纸进来，或点击选择
+    <label class="drop" id="drop" tabindex="0"><span data-i18n="drop">拖一张壁纸进来，或点击选择</span>
       <input type="file" id="file" accept="image/*"></label>
-    <button class="copy" id="dlBtn" type="button" style="margin-top:0">下载这一张 · 1320×2868</button>
-    <button class="copy" id="dlPairBtn" type="button" style="margin-top:6px;background:var(--panel-2);color:var(--text);border:1px solid var(--line)">下载并排 · 锁屏+主屏 3:4</button>
+    <button class="copy" id="dlBtn" type="button" style="margin-top:0" data-i18n="dl1">下载这一张 · 1320×2868</button>
+    <button class="copy" id="dlPairBtn" type="button" style="margin-top:6px;background:var(--panel-2);color:var(--text);border:1px solid var(--line)" data-i18n="dl2">下载并排 · 锁屏+主屏 3:4</button>
     <label class="drop" id="batchDrop" tabindex="0" style="margin-top:4px">
-      批量：拖多张壁纸进来，每张出锁屏、主屏、并排三张
+      <span data-i18n="batch">批量：拖多张壁纸进来，每张出锁屏、主屏、并排三张</span>
       <input type="file" id="batchFile" accept="image/*" multiple></label>
     <div id="batchOut" class="batch" hidden></div>
-    <p class="hint" id="dlHint">整块手机就是一个 SVG，直接光栅化导出 —— 不是把 DOM 猜着重画一遍</p>
+    <p class="hint" id="dlHint" data-i18n="hint">整块手机就是一个 SVG，直接光栅化导出 —— 不是把 DOM 猜着重画一遍</p>
   </div>
 
   <div>
     <section class="panel">
-      <div class="phead"><h2>时钟字形</h2><em>SFNS.ttf 可变轴</em></div>
+      <div class="phead"><h2 data-i18n="pGlyph">时钟字形</h2><em>SFNS.ttf 可变轴</em></div>
       <div class="rows">
-        <div class="row"><label for="cTime">时间</label><input type="text" id="cTime"><output></output></div>
-        <div class="row"><label for="cBrand">署名</label><input type="text" id="cBrand" placeholder="@你的账号（选填）"><output></output></div>
-        <div class="row"><label for="wdth">宽度 <b>wdth</b></label>
+        <div class="row"><label for="cTime" data-i18n="lTime">时间</label><input type="text" id="cTime"><output></output></div>
+        <div class="row"><label for="cBrand" data-i18n="lBrand">署名</label><input type="text" id="cBrand" placeholder="@你的账号（选填）"><output></output></div>
+        <div class="row"><label for="wdth" data-i18n="lWdth">宽度 <b>wdth</b></label>
           <input type="range" id="wdth" min="30" max="150" step="1" value="45"><output id="oWdth">45</output></div>
-        <div class="row"><label for="wght">字重 <b>wght</b></label>
+        <div class="row"><label for="wght" data-i18n="lWght">字重 <b>wght</b></label>
           <input type="range" id="wght" min="1" max="1000" step="10" value="280"><output id="oWght">280</output></div>
-        <div class="row"><label for="fsize">宽度 <b>占屏%</b></label>
+        <div class="row"><label for="fsize" data-i18n="lFsize">宽度 <b>占屏%</b></label>
           <input type="range" id="fsize" min="30" max="98" step="1" value="88"><output id="oFsize">22.4</output></div>
-        <div class="row"><label for="ypos">中线 <b>屏高%</b></label>
+        <div class="row"><label for="ypos" data-i18n="lYpos">中线 <b>屏高%</b></label>
           <input type="range" id="ypos" min="12" max="70" step="0.5" value="24"><output id="oYpos">24</output></div>
       </div>
-      <p class="note">轴范围取自本机 SFNS.ttf：wdth 30–150、wght 1–1000。
+      <p class="note" data-i18n="noteAxis">轴范围取自本机 SFNS.ttf：wdth 30–150、wght 1–1000。
         这条轴<b>只有 Safari 和 macOS 上的 Chrome</b> 能驱动，别处静默回退成常规宽度。</p>
     </section>
 
     <section class="panel">
-      <div class="phead"><h2>时钟</h2><em>实测 α=0.60</em></div>
+      <div class="phead"><h2 data-i18n="pClock">时钟</h2><em data-i18n="emAlpha">实测 α=0.60</em></div>
       <div class="rows">
-        <div class="row"><label for="alpha">不透明度</label>
+        <div class="row"><label for="alpha" data-i18n="lAlpha">不透明度</label>
           <input type="range" id="alpha" min="0.1" max="1" step="0.01" value="0.60"><output id="oAlpha">0.60</output></div>
       </div>
-      <p class="note">真机实测 397 个采样点：<b>α=0.601±0.072，中位 0.619</b>。
+      <p class="note" data-i18n="noteAlpha">真机实测 397 个采样点：<b>α=0.601±0.072，中位 0.619</b>。
         背景变化时笔画内按同比例跟着变 —— 就是平涂半透明，**不是折射玻璃**。
         此前做的 SDF 位移折射和斜面高光已删。</p>
     </section>
 
     <section class="panel">
-      <div class="phead"><h2>开关</h2><em>lockscreen.json</em></div>
+      <div class="phead"><h2 data-i18n="pToggles">开关</h2><em>lockscreen.json</em></div>
       <div class="chips">
-        <button class="chip" id="tIsland" aria-pressed="true" type="button">灵动岛</button>
-        <button class="chip" id="tLunar" aria-pressed="true" type="button">农历</button>
-        <button class="chip" id="tInk" aria-pressed="false" type="button">文字·自动</button>
-        <button class="chip" id="tMode" aria-pressed="true" type="button">拉伸态时钟</button>
+        <button class="chip" id="tIsland" aria-pressed="true" type="button" data-i18n="cIsland">灵动岛</button>
+        <button class="chip" id="tLunar" aria-pressed="true" type="button" data-i18n="cLunar">农历</button>
+        <button class="chip" id="tInk" aria-pressed="false" type="button" data-i18n="cInk">文字·自动</button>
+        <button class="chip" id="tMode" aria-pressed="true" type="button" data-i18n="cMode">拉伸态时钟</button>
       </div>
     </section>
 
     <section class="panel">
-      <div class="phead"><h2>参数</h2><em>粘进 coverGen</em></div>
+      <div class="phead"><h2 data-i18n="pJson">参数</h2><em data-i18n="emJson">粘进 coverGen</em></div>
       <div class="out"><pre id="json">…</pre>
         <button class="copy" id="copyBtn" type="button">复制 JSON</button></div>
     </section>
@@ -875,6 +875,55 @@ apply();
 
 /* 调试/自动化出口。页面功能不依赖它，但有了它就能在外部脚本里
    直接调导出，不必模拟点击（下载会落到浏览器下载目录，不好取回）。 */
+
+/* ── 双语 ─────────────────────────────────────────────────────
+   中文是原文，英文在这张表里。键打在元素的 data-i18n 上。
+   用 innerHTML 而不是 textContent：副标题和几个 label 里有 <code>/<a>/<b>。
+   首次访问按 navigator.language 猜，之后记住选择。 */
+var I18N={
+  h1:'iPhone Wallpaper Stage',
+  sub:'Every layout constant measured from iOS 26 Simulator screenshots, reproducible with <code>tools/measure-ios.mjs</code> · the clock is a flat translucent white (α=0.60, from 397 samples), glyphs come from Core Text’s SF width axis · <a href="https://github.com/Deguang/iphone-lockstage">source</a>',
+  theme:'Theme', tabLock:'Lock', tabHome:'Home',
+  drop:'Drop a wallpaper here, or click to choose',
+  dl1:'Download this one · 1320×2868',
+  dl2:'Download pair · lock + home, 3:4',
+  batch:'Batch: drop several wallpapers — each gets lock, home and pair',
+  hint:'The whole phone is one SVG, rasterised directly — not a DOM redraw guessed by hand',
+  pGlyph:'Clock glyphs', lTime:'Time', lBrand:'Signature',
+  lWdth:'Width <b>wdth</b>', lWght:'Weight <b>wght</b>',
+  lFsize:'Size <b>% of width</b>', lYpos:'Centre <b>% of height</b>',
+  noteAxis:'Axis ranges read off this machine’s SFNS.ttf: wdth 30–150, wght 1–1000. <b>Only Safari and Chrome on macOS</b> can drive this axis; everywhere else it silently falls back to regular width.',
+  pClock:'Clock', emAlpha:'measured α=0.60', lAlpha:'Opacity',
+  noteAlpha:'397 sample points on a device screenshot: <b>α=0.601±0.072, median 0.619</b>. The ratio inside the strokes tracks the background proportionally — it is a flat translucent white, <b>not refractive glass</b>. The earlier SDF displacement and bevel specular were deleted.',
+  pToggles:'Toggles', cIsland:'Dynamic Island', cLunar:'Lunar date',
+  cInk:'Ink · auto', cMode:'Stretched clock',
+  pJson:'Params', emJson:'paste into coverGen',
+  _brandPh:'@your handle (optional)'
+};
+var LANG_KEY='lockstage.lang', ZH={};
+document.querySelectorAll('[data-i18n]').forEach(function(e){ ZH[e.getAttribute('data-i18n')]=e.innerHTML; });
+var ZH_BRAND_PH=$('cBrand').placeholder;
+function setLang(l){
+  var en = l==='en';
+  document.querySelectorAll('[data-i18n]').forEach(function(e){
+    var k=e.getAttribute('data-i18n');
+    e.innerHTML = en ? (I18N[k]||ZH[k]) : ZH[k];
+  });
+  $('cBrand').placeholder = en ? I18N._brandPh : ZH_BRAND_PH;
+  $('langBtn').textContent = en ? '中文' : 'EN';
+  document.documentElement.lang = en ? 'en' : 'zh-CN';
+  try{ localStorage.setItem(LANG_KEY,l); }catch(e){}
+}
+(function(){
+  var l=null;
+  try{ l=localStorage.getItem(LANG_KEY); }catch(e){}
+  if(!l) l = /^zh/i.test(navigator.language||'') ? 'zh' : 'en';
+  setLang(l);
+  $('langBtn').addEventListener('click',function(){
+    setLang(document.documentElement.lang==='en' ? 'zh' : 'en');
+  });
+})();
+
 window.lockstage={
   render:renderPNG, pair:renderPair, apply:apply, showTab:showTab,
   setWallpaper:function(u){ wpURL=u; apply(); },
