@@ -79,11 +79,11 @@ CoreText 按名字取也会静默回退（要 `.SFNS-Compressed`，给的是 Tim
 
 ## 素材：带工具，不带别人的资产
 
-主屏图标是**实测几何 + 开放许可符号**拼的 —— 容器用 `src/ios-metrics.json` 里
-量出来的 68pt / 25% 圆角 / 100.7pt 列距，里面的符号取自
-[Phosphor Icons](https://github.com/phosphor-icons/core)（MIT）。
-刻意不模仿任何一家的具体应用图标：开放许可管的是「文件能不能再分发」，
-管不了「图案像不像别人的商标」，所以只复刻形式语言，不复刻图案。
+没放真图标时，主屏画**三排半透明圆角块** —— 没有符号、没有应用名、
+不含任何第三方素材。尺寸和网格全部取自 `src/ios-metrics.json` 的实测值，
+颜色跟着壁纸明暗走（图标区和 Dock 分别取样）。
+
+这样也更合本职：这个工具是看**壁纸**的，主屏只需要回答「压上去还读不读得清」。
 
 **Apple 的图标美术（`src/icons.js`，约 729 KB）不入库。** 想用真图标就自己抠：
 
@@ -92,7 +92,7 @@ xcrun simctl io booted screenshot reference/home.png
 node tools/extract-icons.mjs reference/home.png     # → src/icons.js
 ```
 
-放进 `src/` 后页面自动优先用它，占位图标让位。
+放进 `src/` 后页面自动切回真图标（组件 + 两排 app），占位块让位。
 
 唯一的例外是 `src/glyphs.js`（22 个数字的轮廓，20 KB）——
 页面缺了它就不画时钟，而时钟是这个工具的全部意义。它版权归 Apple，
@@ -102,8 +102,7 @@ node tools/extract-icons.mjs reference/home.png     # → src/icons.js
 
 MIT —— **仅适用于本项目的代码**。
 
-`src/glyphs.js` 是 Apple 的字形轮廓，不在此范围内；主屏占位图标的符号来自
-Phosphor Icons（MIT）。见 [NOTICE](NOTICE)。
+`src/glyphs.js` 是 Apple 的字形轮廓，不在此范围内。见 [NOTICE](NOTICE)。
 
 早期的玻璃时钟技法改编自 [shuding/liquid-glass](https://github.com/shuding/liquid-glass)（MIT），
 那部分代码后来被实测推翻并删除了，致谢保留。

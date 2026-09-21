@@ -4,18 +4,19 @@ NOTICE — 第三方素材的授权范围
 
 LICENSE（MIT）适用于：index.html、tools/ 下的脚本、src/ios-metrics.json 里的实测常量、README。
 
-## 占位 app 图标：Phosphor Icons（MIT）
+## 占位 app 图标：不含任何第三方素材
 
-主屏上的图标是「**实测几何 + 开放许可符号**」拼出来的，不是任何一家的应用图标：
+没放真图标（src/icons.js）时，主屏画的是**三排半透明圆角块** —— 没有符号、
+没有应用名、不是任何一家的图标，只是纯几何：
 
-  · 容器几何（68pt 边长、25% 圆角、100.7pt 列距……）来自 src/ios-metrics.json，
-    由 tools/measure-ios.mjs 从模拟器截图量出，是本项目自己的实测成果
-  · 里面的符号取自 Phosphor Icons 的 fill 字形
-    MIT License, Copyright (c) 2023 Phosphor Icons — https://github.com/phosphor-icons/core
+  · 块的尺寸与网格（68pt 边长、25% 圆角、100.7pt 列距、108.7pt 行距）
+    来自 src/ios-metrics.json，由 tools/measure-ios.mjs 从模拟器截图量出
+  · 三排的起点取 widget2x2.top：实测 94 + 2×108.7 = 311.4 ≈ firstIconRowTop 311.3，
+    也就是 2×2 组件正好占掉网格前两行，所以「去组件、改三排」落点仍在真实网格上
+  · 颜色跟着壁纸明暗走（亮壁纸用黑、暗壁纸用白），图标区和 Dock 各取一次样
 
-刻意**不模仿任何一家的具体应用图标**。开放许可解决的是「这些文件能不能再分发」，
-解决不了「这个图案像不像别人的商标」—— 所以只复刻形式语言（圆角方块 + 渐变底 +
-居中白色符号），不复刻图案，应用名也用通用名词。
+这样做也更合本职：这个工具是用来看**壁纸**的，主屏只需要回答
+「有东西压在这儿、压上去壁纸还读不读得清」。放具体图标反而抢注意力。
 
 ## src/glyphs.js：Apple 的字形轮廓
 
