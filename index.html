@@ -480,7 +480,13 @@ function buildHome(){
   /* --- 状态栏右侧：**优先用从真机抠出的图元**（白色 + 灰度当 alpha）。
      手画过两轮都错（信号画成递增高度的条、Wi-Fi 三段弧凭感觉），
      所以改成抠图；抠不到才退回手画。位置用逐图元实测值。 --- */
-  var IC=window.LS_ICONS||null;
+  /* 真实图标是从模拟器截图抠的 Apple 素材。自己预览壁纸用没问题，
+     但**放进商品页就是商业用途**，风险不一样。
+     所以留一个强制开关：LS_SLAB_ONLY 为真时，无论 icons.js 在不在，
+     一律走三排半透明占位块。2026-09-22 加的 —— 当天上架商品时才发现
+     机模里印着一堆苹果图标，而 icons.js 被 gitignore 了、
+     「仓库里没有」让人误以为「页面上也没有」。 */
+  var IC=window.LS_SLAB_ONLY?null:(window.LS_ICONS||null);
   var SBI=IC&&IC.statusBar;
   if(SBI&&SBI.signal&&SBI.wifi&&SBI.battery){
     ['signal','wifi','battery'].forEach(function(k){
@@ -927,6 +933,9 @@ function setLang(l){
 window.lockstage={
   render:renderPNG, pair:renderPair, apply:apply, showTab:showTab,
   setWallpaper:function(u){ wpURL=u; apply(); },
+  /** 强制占位色块模式（商业用途必开）。切换后会重建主屏。 */
+  slabOnly:function(on){ window.LS_SLAB_ONLY=!!on; try{ buildHome(); }catch(e){} apply(); },
+  usingRealIcons:function(){ return !window.LS_SLAB_ONLY && !!(window.LS_ICONS&&window.LS_ICONS.icons&&window.LS_ICONS.icons.length); },
   state:S
 };
 })();
