@@ -129,7 +129,7 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
                靠一层柔和暗晕把边缘定出来 —— 和 iOS 给图标标签加阴影是同一个思路。
                比 labSh 更散更淡：那个是给文字的，用在色块上会显脏。 -->
           <filter id="slabSh" x="-35%" y="-35%" width="170%" height="170%">
-            <feDropShadow dx="0" dy="2.5" stdDeviation="7" flood-color="#000" flood-opacity="0.32"/>
+            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.38"/>
           </filter>
           <!-- 暗底用的弱档：深色壁纸上只要一点点边缘交代，重了会发脏 -->
           <filter id="slabShDim" x="-30%" y="-30%" width="160%" height="160%">
@@ -432,6 +432,8 @@ function apply(){
   paintGlyphs($('clockGlyphs'),L);
   $('clockGlyphs').setAttribute('fill-opacity',S.alpha);
   $('clockGlyphs').style.setProperty('--clock-ink',S.dark?'#000':'#fff');
+  /* S.inkHex：iOS 锁屏「自定字色」—— 时钟用指定实色、不透明（redbook-op 的 lockshot --ink-hex 用） */
+  if(S.inkHex){ $('clockGlyphs').style.setProperty('--clock-ink',S.inkHex); $('clockGlyphs').setAttribute('fill-opacity',1); }
   lastLayout=L;
 
   $('statusBar').setAttribute('color',ink);      // 图元用 currentColor
@@ -443,6 +445,7 @@ function apply(){
   $('brandMark').setAttribute('fill',ink);
   $('carrier').textContent=S.time;               // 真机主屏左上角是时间，不是运营商
   $('dateL').setAttribute('fill',ink);
+  if(S.inkHex) $('dateL').setAttribute('fill',S.inkHex);
   $('island').style.display=S.island?'':'none';
   $('dateL').textContent=nowDate(S.lunar);
   $('dateL').setAttribute('font-family',"'PingFang SC',"+FONT);
@@ -576,8 +579,9 @@ function buildHome(){
      亮底倍率同时降到 1.40，因为基数抬了，再乘 1.55 会糊成一片白。
      实际值：亮底 icon 0.42×1.40=0.588、dockTile 0.58×1.40=0.812、dockBar 0.44×1.40=0.616 */
   var SLAB={icon:0.42, dockTile:0.58, dockBar:0.44, brightMul:1.40};
+  /* 亮底用浅灰而不是白：白块压在白壁纸上只剩一圈投影，看不出是图标（2026-09-24 白底 Q 版手办那套） */
   function slab(x,y,w,h,r,op,parent,brightBg){
-    var a={x:x,y:y,width:w,height:h,rx:r,fill:'#fff',
+    var a={x:x,y:y,width:w,height:h,rx:r,fill:brightBg?'#c9ccd3':'#fff',
            'fill-opacity':(brightBg?op*SLAB.brightMul:op).toFixed(3)};
     /* 投影一律加 —— 原来只在亮底加，暗底上色块边缘同样发虚。
        两档：亮底用 slabSh（强），暗底用 slabShDim（弱，避免压脏深色壁纸）。 */
@@ -754,15 +758,20 @@ function blobToImage(b){
  * 比分成两张更省位置，而 3:4 正好是信息流里单图的最大竖版比例。
  * 背景取壁纸本身的主色调，不用灰底。
  */
-async function renderPair(){
+async function renderPair(homeURL){
   /* 并排图里**屏内署名要关掉** —— 底部背景区已经有一个，
      两处都画就是重复。屏内那个只服务于整屏封面。 */
   var keepBrand=S.brand; S.brand='';
   var keep=PAGE;
   showTab('lock'); apply(); await new Promise(function(r){setTimeout(r,80)});
   var a=await renderPNG();
+  /* homeURL：主屏用另一张壁纸（锁屏大主体 + 主屏小主体那种成对壁纸）。
+     换图后要等解码和自动配色算完，和 setWallpaper 之后的等待同理 */
+  var keepWp=wpURL;
+  if(homeURL){ wpURL=homeURL; apply(); await new Promise(function(r){setTimeout(r,450)}); }
   showTab('home'); apply(); await new Promise(function(r){setTimeout(r,80)});
   var b=await renderPNG();
+  if(homeURL){ wpURL=keepWp; }
   showTab(keep); S.brand=keepBrand; apply();
   if(!a||!b) return null;
   var W=1500,H=2000, gap=Math.round(W*0.045), side=Math.round(W*0.022);
