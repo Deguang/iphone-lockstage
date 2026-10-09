@@ -2,6 +2,18 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<!-- Google tag（和 app.lideguang.com 其他站同一个 ID）。
+     file:// 打开时不加载 —— redbook-op 的 lockshot 会用本地文件批量出图，别算成访问 -->
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+if(/^https?:$/.test(location.protocol)){
+  var gs=document.createElement('script');gs.async=true;
+  gs.src='https://www.googletagmanager.com/gtag/js?id=G-49HSQQVZ1F';
+  document.head.appendChild(gs);
+  gtag('js',new Date());gtag('config','G-49HSQQVZ1F');
+}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iPhone 壁纸预演台 · iphone-lockstage</title>
 <meta name="description" content="把壁纸放进按真机实测尺寸复刻的 iPhone 锁屏与主屏里预览。版式常量全部来自 iOS 26 模拟器截图实测。iPhone lock screen and home screen wallpaper preview — every layout constant measured from iOS 26 Simulator screenshots.">
@@ -264,6 +276,8 @@ pre{margin:0;background:var(--panel-2);border:1px solid var(--line);border-radiu
      **浏览器驱动不了系统字体这条轴**（Chrome 实测 wdth 150→30 宽度完全不变），
      所以不在浏览器里排字，直接画路径。轮廓源自 Apple 字体，gitignore 不进仓库。 -->
 <script src="src/glyphs.js" onerror="void 0"></script>
+<deguang-footer></deguang-footer>
+<script src="https://app.lideguang.com/deguang-footer.js" type="module" async></script>
 <script>
 (function(){
 var $=function(i){return document.getElementById(i)};
@@ -695,11 +709,11 @@ function readFile(f){
   if(!f||!/^image\//.test(f.type))return;
   var r=new FileReader();r.onload=function(){wpURL=r.result;apply()};r.readAsDataURL(f);
 }
-$('file').addEventListener('change',function(){readFile(this.files[0])});
+$('file').addEventListener('change',function(){readFile(this.files[0]);track('wallpaper_upload',{via:'picker'})});
 var dz=$('drop');
 ['dragenter','dragover'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault();dz.classList.add('over')})});
 ['dragleave','drop'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault();dz.classList.remove('over')})});
-dz.addEventListener('drop',function(ev){readFile(ev.dataTransfer.files[0])});
+dz.addEventListener('drop',function(ev){readFile(ev.dataTransfer.files[0]);track('wallpaper_upload',{via:'drop'})});
 dz.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();$('file').click()}});
 
 $('copyBtn').addEventListener('click',function(){
@@ -820,6 +834,8 @@ async function renderPair(homeURL){
 function fileName(tag){
   return 'lockstage_'+(tag||PAGE)+'_'+S.time.replace(':','')+'.png';
 }
+/* 埋点：gtag 没加载（file:// 或被拦）时 dataLayer 照样收，不报错 */
+function track(name,params){ try{ gtag('event',name,params||{}); }catch(e){} }
 function save(blob,name){
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download=name;
@@ -827,12 +843,12 @@ function save(blob,name){
   setTimeout(function(){URL.revokeObjectURL(a.href)},3000);
 }
 $('dlBtn').addEventListener('click',function(){
-  renderPNG().then(function(b){ if(b){save(b,fileName()); $('dlHint').textContent='已导出 '+SW+'×'+SH;} });
+  renderPNG().then(function(b){ if(b){save(b,fileName()); $('dlHint').textContent='已导出 '+SW+'×'+SH; track('export',{kind:'single',screen:PAGE});} });
 });
 $('dlPairBtn').addEventListener('click',function(){
   $('dlHint').textContent='合成中…';
   renderPair().then(function(b){
-    if(b){ save(b,fileName('pair')); $('dlHint').textContent='已导出并排 1500×2000'; }
+    if(b){ save(b,fileName('pair')); $('dlHint').textContent='已导出并排 1500×2000'; track('export',{kind:'pair'}); }
     else $('dlHint').textContent='合成失败';
   });
 });
@@ -844,6 +860,7 @@ function readAsDataURL(f){
   });
 }
 async function batch(files){
+  track('export',{kind:'batch',count:files.length});
   var box=$('batchOut'); box.hidden=false; box.innerHTML='';
   var keep=wpURL, results=[];
   var add=function(blob,name){
@@ -890,6 +907,18 @@ $('batchFile').addEventListener('change',function(){ if(this.files.length) batch
   bz.addEventListener('drop',function(ev){ if(ev.dataTransfer.files.length) batch(ev.dataTransfer.files); });
   bz.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();$('batchFile').click()} });
 })();
+
+/* 矩阵 footer 在 Shadow DOM 里只认 prefers-color-scheme，看不到这里的 data-theme。
+   往它的 shadowRoot 补一段样式，把 --dg-* 指到本页的主题变量上（自定义属性能穿透
+   shadow 边界继承），切主题就自动跟着变。它在 connectedCallback 里一次性渲染，补一次就够。 */
+if(window.customElements) customElements.whenDefined('deguang-footer').then(function(){
+  var f=document.querySelector('deguang-footer');
+  if(!f||!f.shadowRoot) return;
+  var st=document.createElement('style');
+  st.textContent='.footer{--dg-border:var(--line)!important;--dg-heading:var(--text)!important;'+
+    '--dg-muted:var(--muted)!important;--dg-main:var(--accent)!important;margin-top:40px}';
+  f.shadowRoot.appendChild(st);
+});
 
 $('themeBtn').addEventListener('click',function(){
   var r=document.documentElement;
