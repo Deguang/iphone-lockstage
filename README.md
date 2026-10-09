@@ -11,7 +11,7 @@ An iPhone lock screen / home screen wallpaper preview tool, for people who make 
 
 ### What it does
 
-Drop in a wallpaper and see it behind a real iOS 26 lock screen — clock, lunar date,
+Drop in a wallpaper and see it behind a real iOS 27 lock screen — clock, lunar date,
 Dynamic Island, status bar — and behind a home screen on the real icon grid. Export the
 lock screen at full resolution (1320×2868), or a 3:4 side-by-side of both screens.
 
